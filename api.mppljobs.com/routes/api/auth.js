@@ -8,8 +8,10 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const sgMail = require("@sendgrid/mail");
 const auth = require("../../middleware/auth");
+const bcryptjs=require("bcryptjs")
+const generateUserToken=require("../../middleware/generateUserToken")
 sgMail.setApiKey(
-  "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"
+  "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"
 );
 
 router.get("/", auth, async (req, res) => {
@@ -48,7 +50,7 @@ router.post("/", async (req, res) => {
       }
       const msg = {
         to: user.email,
-        from: "vedant.pruthi.io@gmail.com",
+        from: "jaskiratsingh772@gmail.com",
         subject: "Verification Mail",
         text: "First Message via Send Grid",
         html:
@@ -74,6 +76,29 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.post("/passwordLogin",async(req,res)=>{
+  const { email, password,type } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.json({ msg: "user Doesnt Exists!" });
+  }
+  const isMatch = await bcryptjs.compare(password, user.password);
+
+  if (!isMatch) {
+    return res.json({ msg: "Invalid Credentials!" });
+  }
+  try {
+    generateUserToken(req,res, user._id,email,type); // change this to email and agentid
+   
+    let token = res.token;
+    console.log(token);
+   return res.status(200).json({msg:"true",token});         
+  } catch (err) {
+    return res.status(500).json(err.toString());
+  }
+
+})
+
 router.post("/confirmOTP", async (req, res) => {
   console.log(req.body.otp);
   Otp.findOne({ otp: req.body.otp }, (err, otp) => {
@@ -98,17 +123,28 @@ router.post("/confirmOTP", async (req, res) => {
             id: user.id,
           },
         };
-        jwt.sign(
-          payload,
-          config.get("jwtSecret"),
-          {
-            expiresIn: 3600000000000000000000000,
-          },
-          (err, token) => {
-            if (err) throw err;
-            res.json({ msg: "OTP Successfully Verified!", tkn: token });
-          }
-        );
+        try{
+           generateUserToken(req,res,user.id,user.email,"candidate");
+           console.log("addada")
+           let token = res.token;
+           res.json({msg:true,token:token})
+        }
+        catch(err){
+          res.status(500).json(err);
+        }
+        
+
+        // jwt.sign(
+        //   payload,
+        //   "process.env.JWT_SECRET",
+        //   {
+        //     expiresIn: 3600000000000000000000000,
+        //   },
+        //   (err, token) => {
+        //     if (err) throw err;
+        //     res.json({ msg: "OTP Successfully Verified!", token: token });
+        //   }
+        // );
       });
     });
   });

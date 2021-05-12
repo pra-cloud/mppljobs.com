@@ -1,269 +1,244 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router";
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import { Link, NavLink } from "react-router-dom";
+import React, { Fragment, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 const Sidebar = () => {
+  const selector = useSelector((state) => state);
+  const dispatch = useDispatch();
   const [role, setRole] = useState([]);
-  const history = useHistory();
-  const getDetails = async () => {
-    try {
-      const config = {
-        headers: {
-          "x-auth-token": localStorage.getItem("token"),
-        },
-      };
-      const res = await axios.get(
-        "http://api.mppljobs.com/api/admin/me",
-        config
-      );
-      localStorage.setItem("name", res.data.name);
-      localStorage.setItem("adminRole", JSON.stringify(res.data.role));
-      setRole(res.data.role);
-    } catch (error) {
-      console.log(error.message);
-    }
-  };
+
   useEffect(() => {
-    getDetails();
-  }, []);
+    setRole(selector.role);
+  }, [selector.role]);
   return (
     <div>
-      <nav class="sidebar sidebar-offcanvas" id="sidebar">
-        <ul class="nav">
-          <li class="nav-item">
-            <a class="nav-link" href="/home">
-              <i class="mdi mdi-view-quilt menu-icon"></i>
-              <span class="menu-title">Dashboard</span>
-            </a>
+      <nav className='sidebar sidebar-offcanvas' id='sidebar'>
+        <ul className='nav'>
+          <li className='nav-item'>
+            <Link className='nav-link' to='/'>
+              <i className='mdi mdi-view-quilt menu-icon'></i>
+              <span className='menu-title'>Dashboard</span>
+            </Link>
           </li>
           {role.includes("All") || role.includes("Jobs") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#ui-basic"
-                aria-expanded="false"
-                aria-controls="ui-basic"
-              >
-                <i class="mdi mdi-palette menu-icon"></i>
-                <span class="menu-title">Jobs</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#ui-basic'
+                aria-expanded='false'
+                aria-controls='ui-basic'>
+                <i className='mdi mdi-palette menu-icon'></i>
+                <span className='menu-title'>Jobs</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="ui-basic">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
-                    {" "}
-                    <a class="nav-link" href="/add-jobs">
+              <div className='collapse' id='ui-basic'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
+                    <NavLink to='/add-jobs' className='nav-link'>
                       Add Jobs
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    {" "}
-                    <a class="nav-link" href="/pending-jobs">
+                  <li className='nav-item'>
+                    <NavLink to='/pending-jobs' className='nav-link'>
                       Pending Jobs
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    {" "}
-                    <a class="nav-link" href="/posted-jobs">
+                  <li className='nav-item'>
+                    <NavLink to='/posted-jobs' className='nav-link'>
                       Posted Jobs
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    {" "}
-                    <a class="nav-link" href="/old-jobs">
+                  <li className='nav-item'>
+                    <NavLink to='/old-jobs' className='nav-link'>
                       Old Jobs
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    {" "}
-                    <a class="nav-link" href="/categories">
+                  <li className='nav-item'>
+                    <NavLink to='/categories' className='nav-link'>
                       Categories
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
 
           {role.includes("All") || role.includes("Candidates") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#ui-advanced"
-                aria-expanded="false"
-                aria-controls="ui-advanced"
-              >
-                <i class="mdi mdi-layers menu-icon"></i>
-                <span class="menu-title">Candidates</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#ui-advanced'
+                aria-expanded='false'
+                aria-controls='ui-advanced'>
+                <i className='mdi mdi-layers menu-icon'></i>
+                <span className='menu-title'>Candidates</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="ui-advanced">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
+              <div className='collapse' id='ui-advanced'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/add-candidates">
+                    <NavLink to='/add-candidates' className='nav-link'>
                       Add Candidates
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/candidates">
+                    <NavLink to='/candidates' className='nav-link'>
                       Candidates
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/blocked-candidates">
+                    <NavLink to='/blocked-candidates' className='nav-link'>
                       Blocked Candidates
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
           {role.includes("All") || role.includes("Employers") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#form-elements"
-                aria-expanded="false"
-                aria-controls="form-elements"
-              >
-                <i class="mdi mdi-view-headline menu-icon"></i>
-                <span class="menu-title">Employers</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#form-elements'
+                aria-expanded='false'
+                aria-controls='form-elements'>
+                <i className='mdi mdi-view-headline menu-icon'></i>
+                <span className='menu-title'>Employers</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="form-elements">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
-                    <a class="nav-link" href="/add-employer">
-                      Add Employers
-                    </a>
+              <div className='collapse' id='form-elements'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
+                    <NavLink to='/add-employer' className='nav-link'>
+                      Add Employer
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/employers">
+                  <li className='nav-item'>
+                    <NavLink to='/employers' className='nav-link'>
                       Employers
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/inactive-employers">
+                  <li className='nav-item'>
+                    <NavLink to='/inactive-employers' className='nav-link'>
                       Inactive Employers
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
 
           {role.includes("All") || role.includes("Notes") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#editors"
-                aria-expanded="false"
-                aria-controls="editors"
-              >
-                <i class="mdi mdi-pencil-box-outline menu-icon"></i>
-                <span class="menu-title">Notes</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#editors'
+                aria-expanded='false'
+                aria-controls='editors'>
+                <i className='mdi mdi-pencil-box-outline menu-icon'></i>
+                <span className='menu-title'>Notes</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="editors">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
-                    <a class="nav-link" href="/add-notes">
+              <div className='collapse' id='editors'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
+                    <NavLink to='/add-notes' className='nav-link'>
                       Add Notes
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="/notes">
+                  <li className='nav-item'>
+                    <NavLink to='/notes' className='nav-link'>
                       Notes
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
           {role.includes("All") || role.includes("Webinars") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#charts"
-                aria-expanded="false"
-                aria-controls="charts"
-              >
-                <i class="mdi mdi-chart-pie menu-icon"></i>
-                <span class="menu-title">Webinars</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#charts'
+                aria-expanded='false'
+                aria-controls='charts'>
+                <i className='mdi mdi-chart-pie menu-icon'></i>
+                <span className='menu-title'>Webinars</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="charts">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
+              <div className='collapse' id='charts'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/add-webinar">
+                    <NavLink to='/add-webinar' className='nav-link'>
                       Add Webinars
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/webinars">
-                      Webinars
-                    </a>
+                    <NavLink to='/webinars' className='nav-link'>
+                      Webinar
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/past-webinars">
+                    <NavLink to='/past-webinars' className='nav-link'>
                       Past Webinars
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
           {role.includes("All") || role.includes("MockTests") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#maps"
-                aria-expanded="false"
-                aria-controls="maps"
-              >
-                <i class="mdi mdi-map menu-icon"></i>
-                <span class="menu-title">Mock Tests</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#maps'
+                aria-expanded='false'
+                aria-controls='maps'>
+                <i className='mdi mdi-map menu-icon'></i>
+                <span className='menu-title'>Mock Tests</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="maps">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
+              <div className='collapse' id='maps'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/add-mock-test">
+                    <a className='nav-link' href='/add-mock-test'>
                       Add Mock Test
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/active-mock-test">
+                    <a className='nav-link' href='/active-mock-test'>
                       Active Mock Test
                     </a>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/past-mock-test">
+                    <a className='nav-link' href='/past-mock-test'>
                       Past Mock Tests
                     </a>
                   </li>
@@ -271,139 +246,134 @@ const Sidebar = () => {
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
           {role.includes("All") || role.includes("Consultants") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#tables"
-                aria-expanded="false"
-                aria-controls="tables"
-              >
-                <i class="mdi mdi-grid-large menu-icon"></i>
-                <span class="menu-title">Consultants</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#tables'
+                aria-expanded='false'
+                aria-controls='tables'>
+                <i className='mdi mdi-grid-large menu-icon'></i>
+                <span className='menu-title'>Consultants</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="tables">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
+              <div className='collapse' id='tables'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/add-consultant">
+                    <NavLink to='/add-consultant' className='nav-link'>
                       Add Consultant
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/consultants">
+                    <NavLink to='/consultants' className='nav-link'>
                       Consultants
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/blocked-consultants">
+                    <NavLink to='/blocked-consultants' className='nav-link'>
                       Blocked Consultants
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
-          {role.includes("All") || role.includes("Subscription") ? (
-            <li class="nav-item">
+          {role.includes("All") || role.includes("Subscriptions") ? (
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#icons"
-                aria-expanded="false"
-                aria-controls="icons"
-              >
-                <i class="mdi mdi-emoticon menu-icon"></i>
-                <span class="menu-title">Subscription</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#icons'
+                aria-expanded='false'
+                aria-controls='icons'>
+                <i className='mdi mdi-emoticon menu-icon'></i>
+                <span className='menu-title'>Subscription</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="icons">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
+              <div className='collapse' id='icons'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/subscription-plan">
+                    <NavLink to='/subsciption-plan' className='nav-link'>
                       Subscription Plans
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/transactions">
-                      Transaction
-                    </a>
+                    <NavLink to='/transactions' className='nav-link'>
+                      Transactions
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
           {role.includes("All") || role.includes("Admins") ? (
-            <li class="nav-item">
+            <li className='nav-item'>
               <a
-                class="nav-link"
-                data-toggle="collapse"
-                href="#auth"
-                aria-expanded="false"
-                aria-controls="auth"
-              >
-                <i class="mdi mdi-account menu-icon"></i>
-                <span class="menu-title">Admins</span>
-                <i class="menu-arrow"></i>
+                className='nav-link'
+                data-toggle='collapse'
+                href='#auth'
+                aria-expanded='false'
+                aria-controls='auth'>
+                <i className='mdi mdi-account menu-icon'></i>
+                <span className='menu-title'>Admins</span>
+                <i className='menu-arrow'></i>
               </a>
-              <div class="collapse" id="auth">
-                <ul class="nav flex-column sub-menu">
-                  <li class="nav-item">
+              <div className='collapse' id='auth'>
+                <ul className='nav flex-column sub-menu'>
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/add-admin">
+                    <NavLink to='/add-admin' className='nav-link'>
                       {" "}
                       Add Admin
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/admins">
-                      {" "}
+                    <NavLink to='/admins' className='nav-link'>
                       Admins
-                    </a>
+                    </NavLink>
                   </li>
-                  <li class="nav-item">
+                  <li className='nav-item'>
                     {" "}
-                    <a class="nav-link" href="/blocked-admins">
-                      {" "}
+                    <NavLink to='/blocked-admins' className='nav-link'>
                       Blocked Admins
-                    </a>
+                    </NavLink>
                   </li>
                 </ul>
               </div>
             </li>
           ) : (
-            <></>
+            <Fragment></Fragment>
           )}
 
-          <li class="nav-item">
-            <a class="nav-link" href="/profile">
-              <i class="mdi mdi-file-document-box-outline menu-icon"></i>
-              <span class="menu-title">Profile</span>
-            </a>
+          <li className='nav-item'>
+            <NavLink to='/profile' className='nav-link'>
+              <i className='mdi mdi-file-document-box-outline menu-icon'></i>
+              <span className='menu-title'>Profile</span>
+            </NavLink>
           </li>
-          <li class="nav-item">
+          <li className='nav-item'>
             <a
-              class="nav-link"
+              className='nav-link'
               onClick={() => {
-                localStorage.removeItem("token");
-                history.push("/");
-              }}
-            >
-              <i class="mdi mdi-file-document-box-outline menu-icon"></i>
-              <span class="menu-title">Logout</span>
+                sessionStorage.removeItem("x-auth-token");
+                localStorage.removeItem("x-auth-token");
+                dispatch({ type: "LOGOUT" });
+              }}>
+              <i className='mdi mdi-file-document-box-outline menu-icon'></i>
+              <span className='menu-title'>Logout</span>
             </a>
           </li>
         </ul>
@@ -411,5 +381,11 @@ const Sidebar = () => {
     </div>
   );
 };
+
+// const m = (state) => {
+//   return {
+//     state: state,
+//   };
+// };
 
 export default Sidebar;

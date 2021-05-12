@@ -10,7 +10,7 @@ const router = require("express").Router();
 //@DESC Get all the Webinarss
 router.get("/all", async (req, res) => {
   try {
-    const webinars = await Webinar.find();
+    const webinars = await Webinar.find({ webinarDate: { $gte: Date.now() } });
     if (webinars.length == 0) {
       return res.json({ msg: "No Webinars Found!" });
     }
@@ -189,28 +189,78 @@ router.put("/update/:id", async (req, res) => {
   }
 });
 
+router.get("/inActive", async (req, res) => {
+  try {
+    var webinar = await Webinar.find({ webinarDate: { $lt: Date.now() } });
+
+    if (webinar.length === 0) {
+      return res.json({ status: "failure", msg: "No Webinar Found!" });
+    }
+    res.json({ status: "success", webinar });
+  } catch (error) {
+    console.log(error.message);
+    res.json({ status: "failure", msg: "Error" });
+  }
+});
+
 //@TEST ROUTE
 //@GET User as per Pagination
 router.get("/users/:page/:perPage", async (req, res) => {
   try {
-    var page = parseInt(req.params.page);
-    var perPage = parseInt(req.params.perPage);
-    var users = await Webinar.find();
-    var len = users.length;
-    if (users.length == 0) {
-      return res.json({ msg: "No Users Found!" });
-    }
-    if (perPage * page < users.length) {
-      var user2 = await Webinar.find()
-        .limit(perPage + 1)
-        .skip(perPage * page + 1);
-    }
-    user = await Webinar.find()
-      .limit(perPage)
-      .skip(perPage * page);
-    res.json({ users: users, length: len });
+    // var page = parseInt(req.params.page);
+    // var perPage = parseInt(req.params.perPage);
+    // var users = await Webinar.find();
+    // if (users.length == 0) {
+    //   return res.json({ msg: "No Users Found!" });
+    // }
+    // if (perPage * page < users.length) {
+    //   var user2 = await Webinar.find()
+    //     .limit(perPage + 1)
+    //     .skip(perPage * page + 1);
+
+    //   return res.json(user);
+    // }
+    // user = await Webinar.find()
+    //   .limit(perPage)
+    //   .skip(perPage * page);
+
+    const page = req.params.page * 1 || 1;
+    const limit = req.params.perPage * 1 || 10;
+    const skip = (page - 1) * limit;
+
+    console.log(Date.now());
+
+    const user = await Webinar.find({
+      webinarDate: { $gte: Date.now() },
+    })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({ user });
   } catch (error) {
     console.log(error.message);
   }
+  //   try {
+  //     var page = parseInt(req.params.page);
+  //     var perPage = parseInt(req.params.perPage);
+  //     var users = await Webinar.find();
+  //     if (users.length == 0) {
+  //       return res.json({ msg: "No Users Found!" });
+  //     }
+  //     if (perPage * page < users.length) {
+  //       console.log("fdfds", perPage * page);
+  //       var user2 = await Webinar.find()
+  //         .limit(perPage + 1)
+  //         .skip(perPage * page + 1);
+  //       console.log("fds", user2);
+  //     }
+  //     console.log(users.length);
+  //     user = await Webinar.find()
+  //       .limit(perPage)
+  //       .skip(perPage * page);
+  //     res.json(user);
+  //   } catch (error) {
+  //     console.log(error.message);
+  //   }
 });
 module.exports = router;

@@ -12,16 +12,23 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: "Email is Required!",
   },
+  password: {
+    type: String,
+    required: "Admin Password is Required!",
+  },
   number: {
     type: Number,
     required: "Phone Number is Required!",
   },
   dob: {
-    type: String,
+    type: String
   },
   isVerified: {
     type: Boolean,
     default: false,
+  },
+  type:{
+    type:String
   },
   savedJobs: {
     type: [Object],
@@ -48,7 +55,13 @@ const UserSchema = new mongoose.Schema({
     type: String,
   },
   preferedWorkLocation: {
-    type: String,
+    type: Array,
+  },
+  skillSet: {
+    type: Array,
+  },
+  languages: {
+    type: Array,
   },
   maritalStatus: {
     type: String,
@@ -70,6 +83,9 @@ const UserSchema = new mongoose.Schema({
   banAccount: {
     type: Boolean,
     default: false,
+  },
+  banReason: {
+    type: String,
   },
 });
 

@@ -25003,6 +25003,17 @@ dl li {
   font-weight: initial;
 }
 
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .avgrund-overlay {
   background: #000;
   width: 100%;
@@ -27504,7 +27515,7 @@ div.tagsinput span.tag a {
 }
 
 /* Navbar */
-.page-body-wrapper {
+.  {
   padding-left: 0;
   padding-right: 0;
 }

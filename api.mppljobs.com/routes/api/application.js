@@ -5,7 +5,7 @@ const User = require("../../models/User");
 const router = express.Router();
 const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(
-  "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"
+  "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"
 );
 
 router.get("/", auth, async (req, res) => {
@@ -46,7 +46,7 @@ router.put("/:id", auth, async (req, res) => {
       );
       const msg = {
         to: user.email,
-        from: "vedant.pruthi.io@gmail.com",
+        from: "jaskiratsingh772@gmail.com",
         subject: "Job Status Changed",
         text: "First Message via Send Grid",
         html:

@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
+/* eslint-disable no-unused-vars */
+import React, { useState } from "react";
 import { useHistory } from "react-router";
 import { updateNotesById } from "../../../actions/adminActions";
 import Navbar from "../../Navbar/Navbar";
-import Sidebar from "../../Sidebar/Sidebar";
-import makeToast from "../../Toaster";
 import Modal from "react-responsive-modal";
 import "react-responsive-modal/styles.css";
-import DocViewer, { PDFRenderer, PNGRenderer } from "react-doc-viewer";
+import DocViewer, { DocViewerRenderers } from "react-doc-viewer";
 
 const EditNotes = (props) => {
   const history = useHistory();
-  const [saved, setSaved] = useState();
-  const [notes, setNotes] = useState(JSON.parse(localStorage.getItem("notes")));
-  const [docs, setDocs] = useState([{ uri: notes.file }]);
 
-  // useEffect(() => {
-  //   setNotes(JSON.parse(localStorage.getItem("notes")));
-  // });
+  const selectedNote = props.location.state && props.location.state;
+
+  const [saved, setSaved] = useState();
+  const docs = [{ uri: selectedNote.file }] || [];
+
   const [edit, setEdit] = useState(false);
-  const [fileName, setFileName] = useState(notes.fileName || "");
-  const [fileAuthor, setFileAuthor] = useState(notes.fileAuthor || "");
+  const [fileName, setFileName] = useState(selectedNote.fileName || "");
+  const [fileAuthor, setFileAuthor] = useState(selectedNote.fileAuthor || "");
   const [file, setFile] = useState(null);
 
   const uploadFile = (e) => {
@@ -37,7 +34,7 @@ const EditNotes = (props) => {
     formData.append("fileAuthor", fileAuthor);
     formData.append("file", file);
 
-    setSaved(await props.updateNotesById(formData, notes._id));
+    setSaved(await updateNotesById(formData, selectedNote._id));
     if (saved) {
       history.goBack();
     } else {
@@ -52,32 +49,30 @@ const EditNotes = (props) => {
 
   return (
     <div>
-      <div class="sidebar-light">
-        <div class="container-scroller">
+      <div className='sidebar-light'>
+        <div className='container-scroller'>
           <Navbar />
-          <div class="container-fluid page-body-wrapper">
-            <Sidebar />
-            <div class="main-panel">
-              <div class="content-wrapper">
-                <div class="row">
-                  <div class="col-12 grid-margin">
-                    <div class="card">
-                      <div class="card-body">
+          <div className='container-fluid page-body-wrapper'>
+            <div className='main-panel'>
+              <div className='content-wrapper'>
+                <div className='row'>
+                  <div className='col-12 grid-margin'>
+                    <div className='card'>
+                      <div className='card-body'>
                         <div
                           style={{
                             display: "flex",
                             flexDirection: "row",
                             justifyContent: "space-between",
                             padding: "10px",
-                          }}
-                        >
+                          }}>
                           <div>
-                            <h4 class="card-title">EDIT NOTES</h4>
+                            <h4 className='card-title'>EDIT NOTES</h4>
                           </div>
                           <div>
                             <button
-                              type="submit"
-                              class="btn btn-primary mr-2"
+                              type='submit'
+                              className='btn btn-primary mr-2'
                               style={{ padding: "10px" }}
                               onClick={() => {
                                 if (!edit) {
@@ -85,31 +80,29 @@ const EditNotes = (props) => {
                                 } else {
                                   setEdit(false);
                                 }
-                              }}
-                            >
+                              }}>
                               {!edit ? "Edit" : "Cancel"}
                             </button>
                             <button
-                              type="submit"
-                              class="btn btn-primary mr-2"
+                              type='submit'
+                              className='btn btn-primary mr-2'
                               style={{ padding: "10px" }}
-                              onClick={onOpenModal}
-                            >
+                              onClick={onOpenModal}>
                               Preview
                             </button>
                           </div>
                         </div>
-                        <form class="form-sample">
-                          <div class="row">
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
+                        <form className='form-sample'>
+                          <div className='row'>
+                            <div className='col-md-6'>
+                              <div className='form-group row'>
+                                <label className='col-sm-3 col-form-label'>
                                   Title
                                 </label>
-                                <div class="col-sm-9">
+                                <div className='col-sm-9'>
                                   <input
-                                    type="text"
-                                    class="form-control"
+                                    type='text'
+                                    className='form-control'
                                     value={fileName}
                                     onChange={(e) => {
                                       setFileName(e.target.value);
@@ -119,15 +112,15 @@ const EditNotes = (props) => {
                                 </div>
                               </div>
                             </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
+                            <div className='col-md-6'>
+                              <div className='form-group row'>
+                                <label className='col-sm-3 col-form-label'>
                                   Author
                                 </label>
-                                <div class="col-sm-9">
+                                <div className='col-sm-9'>
                                   <input
-                                    type="text"
-                                    class="form-control"
+                                    type='text'
+                                    className='form-control'
                                     value={fileAuthor}
                                     onChange={(e) => {
                                       setFileAuthor(e.target.value);
@@ -137,28 +130,29 @@ const EditNotes = (props) => {
                                 </div>
                               </div>
                             </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
+                            <div className='col-md-6'>
+                              <div className='form-group row'>
+                                <label className='col-sm-3 col-form-label'>
                                   File
                                 </label>
-                                <div class="col-sm-9 grid-margin stretch-card">
-                                  <div class="card" style={{ width: "20px" }}>
-                                    <div class="card-body">
-                                      <h4 class="card-title">
+                                <div className='col-sm-9 grid-margin stretch-card'>
+                                  <div
+                                    className='card'
+                                    style={{ width: "20px" }}>
+                                    <div className='card-body'>
+                                      <h4 className='card-title'>
                                         Drop Files Here
                                       </h4>
                                       <input
                                         style={{ width: "290px" }}
-                                        type="file"
+                                        type='file'
                                         onChange={(e) => {
                                           uploadFile(e);
                                         }}
                                         disabled={!edit}
                                         // action="https://www.bootstrapdash.com/file-upload"
-                                        class="dropzone"
-                                        id="my-awesome-dropzone"
-                                      ></input>
+                                        className='dropzone'
+                                        id='my-awesome-dropzone'></input>
                                     </div>
                                   </div>
                                 </div>
@@ -167,26 +161,37 @@ const EditNotes = (props) => {
                           </div>
 
                           <button
-                            type="button"
-                            onClick={() => {
+                            type='submit'
+                            onClick={(e) => {
+                              e.preventDefault();
                               dataSubmit();
                             }}
-                            class="btn btn-primary mr-2"
-                          >
+                            className='btn btn-primary mr-2'>
                             {!edit ? "Submit" : "Save"}
                           </button>
-                          <button class="btn btn-light">Cancel</button>
+                          <button
+                            type='button'
+                            className='btn btn-light'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              history.push("/notes");
+                            }}>
+                            Cancel
+                          </button>
                         </form>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <footer class="footer">
-                <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                  <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
+              <footer className='footer'>
+                <div className='d-sm-flex justify-content-center justify-content-sm-between'>
+                  <span className='text-muted text-center text-sm-left d-block d-sm-inline-block'>
                     Copyright © 2021{" "}
-                    <a href="https://www.toodecimal.com" target="_blank">
+                    <a
+                      href='https://www.toodecimal.com'
+                      rel='noreferrer'
+                      target='_blank'>
                       Too Decimal
                     </a>
                     . All rights reserved.
@@ -200,14 +205,11 @@ const EditNotes = (props) => {
       <Modal open={open} onClose={onCloseModal} center>
         <DocViewer
           style={{ height: 400, width: 400 }}
-          pluginRenderers={[PDFRenderer, PNGRenderer]}
-          documents={docs}
-        ></DocViewer>
+          pluginRenderers={DocViewerRenderers}
+          documents={docs}></DocViewer>
       </Modal>
     </div>
   );
 };
 
-export default connect(null, {
-  updateNotesById,
-})(EditNotes);
+export default EditNotes;

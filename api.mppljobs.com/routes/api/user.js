@@ -9,6 +9,7 @@ const sgMail = require("@sendgrid/mail");
 const auth = require("../../middleware/auth");
 const multer = require("multer");
 const path = require("path");
+const bcryptjs = require("bcryptjs");
 
 const storage = multer.diskStorage({
   destination: "./Resumes",
@@ -24,7 +25,7 @@ const upload = multer({
 });
 
 sgMail.setApiKey(
-  "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"
+  "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"
 );
 
 //@TEST ROUTE
@@ -38,14 +39,11 @@ router.get("/users/:page/:perPage", async (req, res) => {
       return res.json({ msg: "No Users Found!" });
     }
     if (perPage * page < users.length) {
-      console.log(perPage * page);
       var user2 = await User.find()
         .limit(perPage + 1)
         .skip(perPage * page + 1);
-      console.log(user2);
     }
-    console.log(users.length);
-    user = await User.find()
+    user = await User.find({ banAccount: false })
       .limit(perPage)
       .skip(perPage * page);
     res.json(user);
@@ -56,7 +54,7 @@ router.get("/users/:page/:perPage", async (req, res) => {
 
 //@Get Route
 //@DESC Get user by Id
-router.get("/details/:id", auth, async (req, res) => {
+router.get("/details/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -73,7 +71,7 @@ router.get("/details/:id", auth, async (req, res) => {
 
 //@GET ROUTE
 //@DEESC Get all the Users
-router.get("/", auth, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const users = await User.find({ banAccount: false });
     if (users.length == 0) {
@@ -88,6 +86,7 @@ router.get("/", auth, async (req, res) => {
 //@POST Route
 //@DESC User Signup or User(Client) creation
 router.post("/", async (req, res) => {
+  console.log(req.body);
   // Make sure this account doesn't already exist
   try {
     let user = await User.findOne({ email: req.body.email });
@@ -97,9 +96,11 @@ router.post("/", async (req, res) => {
     user = new User({
       name: req.body.name,
       email: req.body.email,
-      number: req.body.number,
-      Designation: req.body.Designation || "",
+      number: req.body.number
+      // Designation: req.body.Designation || "",
     });
+    const salt = await bcryptjs.genSalt(10);
+    user.password = await bcryptjs.hash(req.body.password, salt);
     var token;
     var uID = crypto.randomBytes(16).toString("hex");
     var profile = new Profile({
@@ -126,17 +127,16 @@ router.post("/", async (req, res) => {
 
         var msg = {
           to: req.body.email,
-          from: "vedant.pruthi.io@gmail.com",
+          from: "jaskiratsingh772@gmail.com",
           subject: "Verification Email for Account Creation",
           text: "Hey there, it’s our first message sent with Nodemailer ;) ",
           html:
-            "<b>Hey there!" +
+            "Hey there!" +
             req.body.name +
-            "Please verify your account by clicking the link: http://" +
+            " Please verify your account by clicking the link: http://" +
             req.headers.host + //React app hosting path will come here
             "/confirmation/" +
-            token.token +
-            ".\n",
+            token.token,
         };
         sgMail
           .send(msg)
@@ -154,12 +154,15 @@ router.post("/", async (req, res) => {
   }
 });
 
+
+
+
 var fileUpload = upload.fields([
   { name: "resume", maxCount: 1 },
   { name: "videoResume", maxCount: 1 },
 ]);
 
-router.put("/update/:id", async (req, res) => {
+router.patch("/update/:id", fileUpload, async (req, res) => {
   const {
     name,
     email,
@@ -172,12 +175,15 @@ router.put("/update/:id", async (req, res) => {
     maritalStatus,
     subscription,
     preferedWorkLocation,
+    languages,
+    skillSet,
   } = req.body;
   const userFields = {};
   var user = await User.findById(req.params.id);
   if (!user) {
     return res.json({ msg: "User Not Found!" });
   }
+
   try {
     if (name) userFields.name = name;
     if (email) userFields.email = email;
@@ -189,8 +195,14 @@ router.put("/update/:id", async (req, res) => {
     if (dob) userFields.dob = dob;
     if (maritalStatus) userFields.maritalStatus = maritalStatus;
     if (subscription) userFields.subscription = subscription;
-    if (preferedWorkLocation)
-      userFields.preferedWorkLocation = preferedWorkLocation;
+    if (preferedWorkLocation) {
+      userFields.preferedWorkLocation = JSON.parse(preferedWorkLocation);
+    }
+    if (languages) userFields.languages = JSON.parse(languages);
+    if (skillSet) userFields.skillSet = JSON.parse(skillSet);
+
+    console.log(userFields);
+
     // userFields.resume = `http://${req.header.host}/Resume/${req.files.resume[0].filename}`;
     // userFields.videoResume = `http://${req.headers.host}/Resume/${req.files.videoResume[0].filename}`;
     user = await User.findOneAndUpdate(
@@ -198,6 +210,11 @@ router.put("/update/:id", async (req, res) => {
       { $set: userFields },
       { new: true }
     );
+
+    if (!user) {
+      res.json({ status: "failure" });
+    }
+
     res.json({ msg: "User Updated", user: user });
   } catch (error) {
     console.log(error.message);
@@ -255,7 +272,7 @@ router.put("/update/:id", async (req, res) => {
 
 //       var msg = {
 //         to: user.email,
-//         from: "vedant.pruthi.io@gmail.com",
+//         from: "jaskiratsingh772@gmail.com",
 //         subject: "Account Suspended Temporarily",
 //         text: "Hey there, it’s our first message sent with Nodemailer ;) ",
 //         html:
@@ -282,7 +299,7 @@ router.put("/update/:id", async (req, res) => {
 //   }
 // });
 
-router.put("/log", auth, async (req, res) => {
+router.put("/log", async (req, res) => {
   var userFields = {
     lastLoggedIn: Date.now(),
   };
@@ -300,15 +317,18 @@ router.put("/log", auth, async (req, res) => {
   }
 });
 //@Ban User
-router.get("/banUser/:id", auth, async (req, res) => {
+router.post("/banUser/:id", async (req, res) => {
   try {
     var user = await User.findById(req.params.id);
+    if (!req.body.banReason) {
+      return res.json({ msg: "Please add reason" });
+    }
     if (!user) {
       return res.json({ msg: "No User Found!" });
     }
     user = await User.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: { banAccount: true } },
+      { $set: { banAccount: true, banReason: req.body.banReason } },
       { new: true }
     );
     res.json({ msg: "User Banned!" });
@@ -318,7 +338,7 @@ router.get("/banUser/:id", auth, async (req, res) => {
 });
 
 //@UnBan User
-router.get("/unBanUser/:id", auth, async (req, res) => {
+router.get("/unBanUser/:id", async (req, res) => {
   try {
     var user = await User.findById(req.params.id);
     if (!user) {
@@ -326,7 +346,7 @@ router.get("/unBanUser/:id", auth, async (req, res) => {
     }
     user = await User.findOneAndUpdate(
       { _id: req.params.id },
-      { $set: { banAccount: false } },
+      { $set: { banAccount: false, banReason: "" } },
       { new: true }
     );
     res.json({ msg: "User UnBanned!" });
@@ -336,7 +356,7 @@ router.get("/unBanUser/:id", auth, async (req, res) => {
 });
 
 //@GET Route
-router.get("/getBannedUser", auth, async (req, res) => {
+router.get("/getBannedUser", async (req, res) => {
   try {
     var users = await User.find({ banAccount: true });
     if (users.length == 0) {
@@ -350,7 +370,7 @@ router.get("/getBannedUser", auth, async (req, res) => {
 
 //@DELETE ROUTE
 //@DESC DELETE User by ID
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     await User.findOneAndDelete({ _id: req.params.id });
     res.json({ msg: "User Deleted!" });

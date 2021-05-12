@@ -1,21 +1,23 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
+/* eslint-disable array-callback-return */
 import React, { useEffect, useState, useMemo } from "react";
-import { connect } from "react-redux";
 import { useHistory } from "react-router-dom";
-import {
-  banUserById,
-  getAllUsers,
-  getUserDetailsByID,
-} from "../../../actions/adminActions";
-import Navbar from "../../Navbar/Navbar";
-import Sidebar from "../../Sidebar/Sidebar";
+import { banUserById, getAllUsers, URL } from "../../../actions/adminActions";
 import { CSVLink } from "react-csv";
+
 import Pagination from "@material-ui/lab/Pagination";
+
 import axios from "axios";
+import { confirmAlert } from "react-confirm-alert";
+import ConfirmaDialog from "../Jobs/ConfirmaDialog";
+import BlockConfirm from "./BlockConfirm";
+
 const useFilterData = (fItems, config = null) => {
   const [filterConfig, setFilterConfig] = useState(config);
 
   const filterItems = useMemo(() => {
-    let filterableItems = [...fItems];
+    let filterableItems = fItems && [...fItems];
     if (filterConfig !== null) {
       filterableItems = filterableItems.filter((user) => {
         if (
@@ -26,12 +28,14 @@ const useFilterData = (fItems, config = null) => {
         }
       });
     }
+    // console.log(filterableItems.length, filterableItems);
     return filterableItems;
   }, [fItems, filterConfig]);
 
   const requestFilter = (key) => {
     setFilterConfig({ key });
   };
+  // console.log(filterItems.length, filterItems);
   return { fItems: filterItems, requestFilter, filterConfig };
 };
 
@@ -39,7 +43,7 @@ const useSortableData = (items, config = null) => {
   const [sortCoonfig, setSortConfig] = useState(config);
 
   const sortedItems = useMemo(() => {
-    let sortableItems = [...items];
+    let sortableItems = items && [...items];
     if (sortCoonfig !== null) {
       sortableItems.sort((a, b) => {
         if (a[sortCoonfig.key] < b[sortCoonfig.key]) {
@@ -58,7 +62,7 @@ const useSortableData = (items, config = null) => {
     let direction = "ascending";
     if (
       sortCoonfig &&
-      sortCoonfig.key == key &&
+      sortCoonfig.key === key &&
       sortCoonfig.direction === "ascending"
     ) {
       direction = "descending";
@@ -68,23 +72,30 @@ const useSortableData = (items, config = null) => {
   return { items: sortedItems, requestSort, sortCoonfig };
 };
 
-const Candidates = (props) => {
+const Candidates = () => {
   const [candidatesArr, setCandidatesArr] = useState([]);
   const getUsers = async () => {
     try {
+      let config = {
+        headers: {
+          "x-auth-token":
+            localStorage.getItem("x-auth-token") ||
+            sessionStorage.getItem("x-auth-token"),
+        },
+      };
       const res = await axios.get(
-        "http://api.mppljobs.com/api/user/users/" + pageNo + "/" + perPage
+        `${URL}/api/user/users/${pageNo}/${perPage}`,
+        config
       );
-      setCandidatesArr(res.data);
+      await setCandidatesArr(res.data);
     } catch (error) {
       console.log(error.message);
     }
   };
-  const { items, requestSort, sortCoonfig } = useSortableData(candidatesArr);
+  const { items, requestSort } = useSortableData(candidatesArr);
   const history = useHistory();
-  const { fItems, requestFilter, filterConfig } = useFilterData(candidatesArr);
+  const { fItems, requestFilter } = useFilterData(candidatesArr);
 
-  const [page, setPage] = useState(Math.ceil(props.users.length / 10));
   const [perPage, setPerPage] = useState("10");
   const [pageNo, setPageNo] = useState("1");
   const [nameFilter, setNameFilter] = useState("");
@@ -92,309 +103,319 @@ const Candidates = (props) => {
   const [numberFilter, setNumberFilter] = useState("");
 
   const [filter, setFilter] = useState(false);
-  useEffect(() => {
-    props.getAllUsers();
-    getUsers();
-    // console.log(candida)
 
-    if (nameFilter !== "" || emailFilter !== "" || numberFilter !== "") {
-      setFilter(false);
-    } else {
-      setFilter(true);
+  const [allCandidates, setCandidates] = useState([]);
+
+  const gettingAllCandidates = async () => {
+    const candidates = await getAllUsers();
+    await setCandidates(candidates);
+  };
+
+  const banUser = async (id, reason) => {
+    const banCandidate = await banUserById(id, { banReason: reason });
+    if (banCandidate) {
+      setCandidatesArr((prevState) => {
+        return prevState.filter((user) => {
+          return user._id !== id;
+        });
+      });
+      await gettingAllCandidates();
+      await getUsers();
     }
+  };
+
+  useEffect(() => {
+    gettingAllCandidates();
+  }, []);
+
+  useEffect(() => {
+    getUsers();
   }, [pageNo]);
+
+  useEffect(() => {
+    if (nameFilter !== "" || emailFilter !== "" || numberFilter !== "") {
+      setFilter(true);
+    } else {
+      setFilter(false);
+    }
+  }, [emailFilter, nameFilter, numberFilter]);
+
   return (
     <div>
-      <div class="sidebar-light">
-        <div class="container-scroller">
-          <Navbar />
-          <div class="container-fluid page-body-wrapper">
-            <Sidebar />
-            <div class="main-panel">
-              <div class="content-wrapper">
-                <div class="card">
-                  <div class="card-body">
-                    <h4 class="card-title">Candidates</h4>
-                    <CSVLink
-                      data={items}
-                      filename={"Users_" + Date.now() + ".csv"}
-                      className="btn btn-primary btn-rounded btn-fw"
-                      style={{ marginLeft: 10, marginBottom: 10 }}
-                    >
-                      Export to CSV
-                    </CSVLink>
-                    <br />
-                    Filter
-                    <div class="form-group">
-                      <div class="form-group row">
-                        <input
-                          type="text"
-                          class="form-control col-sm-2"
-                          id="exampleFormControlSelect2"
-                          placeholder="Name"
-                          value={nameFilter}
-                          onChange={(e) => {
-                            setNameFilter(e.target.value);
-                            requestFilter(e.target.value);
-                          }}
-                        ></input>
-                        <input
-                          type="text"
-                          class="form-control col-sm-2"
-                          id="exampleFormControlSelect2"
-                          placeholder="Email"
-                          value={emailFilter}
-                          onChange={(e) => {
-                            setEmailFilter(e.target.value);
-                            requestFilter(e.target.value);
-                          }}
-                        ></input>
-                        <input
-                          type="text"
-                          class="form-control col-sm-2"
-                          id="exampleFormControlSelect2"
-                          placeholder="Number"
-                          value={numberFilter}
-                          onChange={(e) => {
-                            setNumberFilter(e.target.value);
-                            requestFilter(e.target.value);
-                          }}
-                        ></input>
-                      </div>
-                    </div>
-                    <div class="row">
-                      <div class="col-12">
-                        <div class="table-responsive">
-                          <Pagination
-                            className="my-3"
-                            siblingCount={1}
-                            boundaryCount={1}
-                            variant="outlined"
-                            shape="rounded"
-                            count={Math.ceil(props.users.length / 10)}
-                            onChange={(e) => {
-                              if (e.target.textContent == "") {
-                                var no = parseInt(pageNo);
-                                setPageNo(no + 1);
-                                getUsers();
+      <div className='main-panel'>
+        <div className='content-wrapper'>
+          <div className='card'>
+            <div className='card-body'>
+              <h4 className='card-title'>Candidates</h4>
+              <CSVLink
+                data={items}
+                filename={"Users_" + Date.now() + ".csv"}
+                className='btn btn-primary btn-rounded btn-fw'
+                style={{ marginLeft: 10, marginBottom: 10 }}>
+                Export to CSV
+              </CSVLink>
+              <br />
+              Filter
+              <div className='form-group'>
+                <div className='form-group row'>
+                  <input
+                    type='text'
+                    className='form-control col-sm-2'
+                    placeholder='Name'
+                    value={nameFilter}
+                    onChange={(e) => {
+                      setNameFilter(e.target.value);
+                      requestFilter(e.target.value);
+                    }}></input>
+                  <input
+                    type='text'
+                    className='form-control col-sm-2'
+                    placeholder='Email'
+                    value={emailFilter}
+                    onChange={(e) => {
+                      setEmailFilter(e.target.value);
+                      requestFilter(e.target.value);
+                    }}></input>
+                  <input
+                    type='text'
+                    className='form-control col-sm-2'
+                    placeholder='Number'
+                    value={numberFilter}
+                    onChange={(e) => {
+                      setNumberFilter(e.target.value);
+                      requestFilter(e.target.value);
+                    }}></input>
+                </div>
+              </div>
+              <div className='row'>
+                <div className='col-12'>
+                  <div className='table-responsive'>
+                    <Pagination
+                      className='my-3'
+                      siblingCount={1}
+                      boundaryCount={1}
+                      variant='outlined'
+                      shape='rounded'
+                      count={Math.ceil(
+                        allCandidates && allCandidates.length / 10
+                      )}
+                      onChange={(e, page) => {
+                        console.log(page);
+                        setPageNo(page);
+                      }}
+                    />
+
+                    <table className='table'>
+                      <thead>
+                        <tr>
+                          <th
+                            onClick={() => {
+                              requestSort("name");
+                              setFilter(true);
+                              if (filter) {
+                                setFilter(false);
                               } else {
-                                setPageNo(e.target.textContent);
-                                getUsers();
+                                setFilter(true);
                               }
-                            }}
-                          />
-                          <table class="table">
-                            <thead>
-                              <tr>
-                                <th
-                                  onClick={() => {
-                                    requestSort("name");
-                                    setFilter(true);
-                                    if (filter) {
-                                      setFilter(false);
-                                    } else {
-                                      setFilter(true);
-                                    }
-                                  }}
-                                >
-                                  Name
-                                </th>
-                                <th
-                                  onClick={() => {
-                                    requestSort("email");
-                                    setFilter(true);
-                                    if (filter) {
-                                      setFilter(false);
-                                    } else {
-                                      setFilter(true);
-                                    }
-                                  }}
-                                >
-                                  Email ID
-                                </th>
-                                <th
-                                  onClick={() => {
-                                    // onOpenModal();
-                                    requestSort("number");
-                                    setFilter(true);
-                                    if (filter) {
-                                      setFilter(false);
-                                    } else {
-                                      setFilter(true);
-                                    }
-                                  }}
-                                >
-                                  Contact Number
-                                </th>
-                                <th>Current Location</th>
-                                <th>Resume</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {filter ? (
-                                items.length === 0 ? (
-                                  <p>Empty</p>
-                                ) : (
-                                  items.map((user) => {
-                                    return (
-                                      <tr>
-                                        <td>{user.name}</td>
-                                        <td>{user.email}</td>
-                                        <td>{user.number}</td>
-                                        <td>Location</td>
-                                        <td>
-                                          <button
-                                            class="btn btn-primary btn-rounded"
-                                            style={{
-                                              padding: "10px",
-                                              paddingLeft: "15px",
-                                              paddingRight: "15px",
-                                            }}
-                                          >
-                                            Download
-                                          </button>
-                                        </td>
-                                        <td>
-                                          <a
-                                            onClick={() => {
-                                              // localStorage.setItem(
-                                              //   "userSelected",
-                                              //   JSON.parse(user)
-                                              // );
-                                              localStorage.setItem(
-                                                "userSelected",
-                                                JSON.stringify(user)
-                                              );
-                                              history.push("/edit-candidate");
-                                            }}
-                                          >
-                                            <button
-                                              class="btn  btn-rounded btn-dark"
-                                              style={{
-                                                padding: "9px",
-                                                marginRight: "5px",
-                                                paddingLeft: "15px",
-                                                paddingRight: "15px",
-                                              }}
-                                            >
-                                              Edit
-                                            </button>
-                                          </a>
-                                          <button
-                                            class="btn  btn-rounded btn-danger"
-                                            style={{
-                                              padding: "9px",
-                                              paddingLeft: "10px",
-                                              paddingRight: "10px",
-                                            }}
-                                            onClick={() => {
-                                              props.banUserById(user._id);
-                                            }}
-                                          >
-                                            Block
-                                          </button>
-                                        </td>
-                                      </tr>
-                                    );
-                                  })
-                                )
-                              ) : (
-                                fItems.map((user) => {
-                                  return (
-                                    <tr>
-                                      <td>{user.name}</td>
-                                      <td>{user.email}</td>
-                                      <td>{user.number}</td>
-                                      <td>Location</td>
-                                      <td>
-                                        <button
-                                          class="btn btn-primary btn-rounded"
-                                          style={{
-                                            padding: "10px",
-                                            paddingLeft: "15px",
-                                            paddingRight: "15px",
-                                          }}
-                                        >
-                                          Download
-                                        </button>
-                                      </td>
-                                      <td>
-                                        <a
-                                          onClick={() => {
-                                            // localStorage.setItem(
-                                            //   "userSelected",
-                                            //   JSON.stringify(user)
-                                            // );
-                                            localStorage.setItem(
-                                              "userSelected",
-                                              JSON.stringify(user)
+                            }}>
+                            Name
+                          </th>
+                          <th
+                            onClick={() => {
+                              requestSort("email");
+                              setFilter(true);
+                              if (filter) {
+                                setFilter(false);
+                              } else {
+                                setFilter(true);
+                              }
+                            }}>
+                            Email ID
+                          </th>
+                          <th
+                            onClick={() => {
+                              // onOpenModal();
+                              requestSort("number");
+                              setFilter(true);
+                              if (filter) {
+                                setFilter(false);
+                              } else {
+                                setFilter(true);
+                              }
+                            }}>
+                            Contact Number
+                          </th>
+                          <th>Current Location</th>
+                          <th>Resume</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filter ? (
+                          items.length === 0 ? (
+                            <tr>
+                              <td>
+                                <p>Empty</p>
+                              </td>
+                            </tr>
+                          ) : (
+                            items.map((user) => {
+                              return (
+                                <tr key={user._id}>
+                                  <td>{user.name}</td>
+                                  <td>{user.email}</td>
+                                  <td>{user.number}</td>
+                                  <td>Location</td>
+                                  <td>
+                                    <button
+                                      className='btn btn-primary btn-rounded'
+                                      style={{
+                                        padding: "10px",
+                                        paddingLeft: "15px",
+                                        paddingRight: "15px",
+                                      }}>
+                                      Download
+                                    </button>
+                                  </td>
+                                  <td>
+                                    <button
+                                      className='btn  btn-rounded btn-dark'
+                                      style={{
+                                        padding: "9px",
+                                        marginRight: "5px",
+                                        paddingLeft: "15px",
+                                        paddingRight: "15px",
+                                      }}
+                                      onClick={() => {
+                                        history.push({
+                                          pathname: "/edit-candidate",
+                                          state: user,
+                                        });
+                                      }}>
+                                      Edit
+                                    </button>
+                                    <button
+                                      className='btn  btn-rounded btn-danger'
+                                      disabled={user.banAccount}
+                                      style={{
+                                        padding: "9px",
+                                        paddingLeft: "10px",
+                                        paddingRight: "10px",
+                                      }}
+                                      onClick={() => {
+                                        confirmAlert({
+                                          customUI: ({ onClose }) => {
+                                            return (
+                                              <BlockConfirm
+                                                perform={(reason) => {
+                                                  banUser(user._id, reason);
+                                                }}
+                                                action='Block'
+                                                role={user.name}
+                                                close={onClose}
+                                              />
                                             );
-                                            history.push("/edit-candidate");
-                                          }}
-                                        >
-                                          <button
-                                            class="btn  btn-rounded btn-dark"
-                                            style={{
-                                              padding: "9px",
-                                              marginRight: "5px",
-                                              paddingLeft: "15px",
-                                              paddingRight: "15px",
-                                            }}
-                                          >
-                                            Edit
-                                          </button>
-                                        </a>
-                                        <button
-                                          class="btn  btn-rounded btn-danger"
-                                          style={{
-                                            padding: "9px",
-                                            paddingLeft: "10px",
-                                            paddingRight: "10px",
-                                          }}
-                                          onClick={() => {
-                                            props.banUserById(user._id);
-                                          }}
-                                        >
-                                          Block
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  );
-                                })
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
+                                          },
+                                        });
+                                      }}>
+                                      Block
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )
+                        ) : (
+                          fItems.map((user) => {
+                            return (
+                              <tr key={user._id}>
+                                <td>{user.name}</td>
+                                <td>{user.email}</td>
+                                <td>{user.number.toString()}</td>
+                                <td>Location</td>
+                                <td>
+                                  <button
+                                    className='btn btn-primary btn-rounded'
+                                    style={{
+                                      padding: "10px",
+                                      paddingLeft: "15px",
+                                      paddingRight: "15px",
+                                    }}>
+                                    Download
+                                  </button>
+                                </td>
+                                <td>
+                                  <button
+                                    className='btn  btn-rounded btn-dark'
+                                    style={{
+                                      padding: "9px",
+                                      marginRight: "5px",
+                                      paddingLeft: "15px",
+                                      paddingRight: "15px",
+                                    }}
+                                    onClick={() => {
+                                      history.push({
+                                        pathname: "/edit-candidate",
+                                        state: user,
+                                      });
+                                    }}>
+                                    Edit
+                                  </button>
+                                  <button
+                                    className='btn  btn-rounded btn-danger'
+                                    style={{
+                                      padding: "9px",
+                                      paddingLeft: "10px",
+                                      paddingRight: "10px",
+                                    }}
+                                    onClick={() => {
+                                      confirmAlert({
+                                        customUI: ({ onClose }) => {
+                                          return (
+                                            <BlockConfirm
+                                              perform={(reason) => {
+                                                banUser(user._id, reason);
+                                              }}
+                                              action='Block'
+                                              role={user.name}
+                                              close={onClose}
+                                            />
+                                          );
+                                        },
+                                      });
+                                    }}>
+                                    Block
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-              <footer class="footer">
-                <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                  <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
-                    Copyright © 2021{" "}
-                    <a href="https://www.toodecimal.com" target="_blank">
-                      Too Decimal
-                    </a>
-                    . All rights reserved.
-                  </span>
-                </div>
-              </footer>
             </div>
           </div>
         </div>
+        <footer className='footer'>
+          <div className='d-sm-flex justify-content-center justify-content-sm-between'>
+            <span className='text-muted text-center text-sm-left d-block d-sm-inline-block'>
+              Copyright © 2021{" "}
+              <a
+                href='https://www.toodecimal.com'
+                rel='noreferrer'
+                target='_blank'>
+                Too Decimal
+              </a>
+              . All rights reserved.
+            </span>
+          </div>
+        </footer>
       </div>
     </div>
   );
 };
-const mapStateToProps = (state) => ({
-  users: state.admin.users,
-});
 
-export default connect(mapStateToProps, {
-  getAllUsers,
-  getUserDetailsByID,
-  banUserById,
-})(Candidates);
+export default Candidates;

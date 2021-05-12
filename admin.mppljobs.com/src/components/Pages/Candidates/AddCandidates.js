@@ -1,131 +1,183 @@
 import React, { useState } from "react";
-import { connect } from "react-redux";
 import { useHistory } from "react-router";
 import { createUser } from "../../../actions/adminActions";
-import Navbar from "../../Navbar/Navbar";
-import Sidebar from "../../Sidebar/Sidebar";
-import makeToast from "../../Toaster";
+import makeToast from "../../../Toaster";
 
-const AddCandidates = (props) => {
+const AddCandidates = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [number, setNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [saved, setSaved] = useState();
   const history = useHistory();
 
   return (
     <div>
-      <div class="sidebar-light">
-        <div class="container-scroller">
-          <Navbar />
-          <div class="container-fluid page-body-wrapper">
-            <Sidebar />
-            <div class="main-panel">
-              <div class="content-wrapper">
-                <div class="row">
-                  <div class="col-12 grid-margin">
-                    <div class="card">
-                      <div class="card-body">
-                        <h4 class="card-title">ADD CANDIDATES</h4>
-                        <form class="form-sample">
-                          <div class="column">
-                            <div class="col-md-7">
-                              <div class="form-group row">
-                                <label
-                                  class="col-sm-3"
-                                  for="exampleFormControlSelect2"
-                                  style={{ alignSelf: "center" }}
-                                >
-                                  Name
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value={name}
-                                    onChange={(e) => {
-                                      setName(e.target.value);
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-7">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Email
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    value={email}
-                                    required={true}
-                                    onChange={(e) => {
-                                      setEmail(e.target.value);
-                                    }}
-                                    class="form-control"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-7">
-                              <div class="form-group row">
-                                <label
-                                  class="col-sm-3"
-                                  for="exampleFormControlSelect2"
-                                  style={{ alignSelf: "center" }}
-                                >
-                                  Contact Number
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="number"
-                                    class="form-control"
-                                    required={true}
-                                    value={number}
-                                    onChange={(e) => {
-                                      setNumber(e.target.value);
-                                    }}
-                                  />
-                                </div>
+      <div className='sidebar-light'>
+        <div className='container-scroller'>
+          <div className='main-panel'>
+            <div className='content-wrapper'>
+              <div className='row'>
+                <div className='col-12 grid-margin'>
+                  <div className='card'>
+                    <div className='card-body'>
+                      <h4 className='card-title'>ADD CANDIDATES</h4>
+                      <form className='form-sample'>
+                        <div className='column'>
+                          <div className='col-md-7'>
+                            <div className='form-group row'>
+                              <label
+                                className='col-sm-3'
+                                style={{ alignSelf: "center" }}>
+                                Name
+                              </label>
+                              <div className='col-sm-9'>
+                                <input
+                                  type='text'
+                                  className='form-control'
+                                  value={name}
+                                  onChange={(e) => {
+                                    setName(e.target.value);
+                                  }}
+                                />
                               </div>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              setSaved(
-                                await props.createUser({ name, email, number })
+                          <div className='col-md-7'>
+                            <div className='form-group row'>
+                              <label className='col-sm-3 col-form-label'>
+                                Email
+                              </label>
+                              <div className='col-sm-9'>
+                                <input
+                                  type='email'
+                                  value={email}
+                                  required={true}
+                                  onChange={(e) => {
+                                    setEmail(e.target.value);
+                                  }}
+                                  className='form-control'
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className='col-md-7'>
+                            <div className='form-group row'>
+                              <label
+                                className='col-sm-3'
+                                style={{ alignSelf: "center" }}>
+                                Contact Number
+                              </label>
+                              <div className='col-sm-9'>
+                                <input
+                                  type='number'
+                                  className='form-control'
+                                  required={true}
+                                  value={number}
+                                  onChange={(e) => {
+                                    setNumber(e.target.value);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='col-md-7'>
+                            <div className='form-group row'>
+                              <label
+                                className='col-sm-3'
+                                style={{ alignSelf: "center" }}>
+                                Password
+                              </label>
+                              <div className='col-sm-9'>
+                                <input
+                                  type='password'
+                                  className='form-control'
+                                  required={true}
+                                  value={password}
+                                  onChange={(e) => {
+                                    setPassword(e.target.value);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type='submit'
+                          onClick={async (e) => {
+                            e.preventDefault();
+
+                            if (name === "" || email === "" || number === "") {
+                              return makeToast(
+                                "error",
+                                "Please add all the fields"
                               );
-                              if (saved) {
-                                history.push("/candidates");
-                              } else {
-                                history.push("/candidates");
-                              }
-                            }}
-                            class="btn btn-primary mr-2"
-                          >
-                            Submit
-                          </button>
-                          <button class="btn btn-light">Cancel</button>
-                        </form>
-                      </div>
+                            }
+
+                            if (number.toString().length < 10) {
+                              return makeToast(
+                                "error",
+                                "Contact Number should atleast have 10 digits"
+                              );
+                            }
+
+                            if (
+                              !email.match(/^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/)
+                            ) {
+                              return makeToast(
+                                "error",
+                                "Please add a valid email"
+                              );
+                            }
+
+                            setSaved(
+                              await createUser({
+                                name,
+                                email,
+                                number,
+                                password,
+                              })
+                            );
+                            if (saved) {
+                              makeToast("success", "Created");
+                              history.push("/candidates");
+                            } else {
+                              history.push("/candidates");
+                            }
+                          }}
+                          className='btn btn-primary mr-2'>
+                          Submit
+                        </button>
+                        <button
+                          type='button'
+                          className='btn btn-light'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            history.goBack();
+                          }}>
+                          Cancel
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </div>
               </div>
-              <footer class="footer">
-                <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                  <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
-                    Copyright © 2021{" "}
-                    <a href="https://www.toodecimal.com" target="_blank">
-                      Too Decimal
-                    </a>
-                    . All rights reserved.
-                  </span>
-                </div>
-              </footer>
             </div>
+            <footer className='footer'>
+              <div className='d-sm-flex justify-content-center justify-content-sm-between'>
+                <span className='text-muted text-center text-sm-left d-block d-sm-inline-block'>
+                  Copyright © 2021{" "}
+                  <a
+                    href='https://www.toodecimal.com'
+                    rel='noreferrer'
+                    target='_blank'>
+                    Too Decimal
+                  </a>
+                  . All rights reserved.
+                </span>
+              </div>
+            </footer>
           </div>
         </div>
       </div>
@@ -133,6 +185,4 @@ const AddCandidates = (props) => {
   );
 };
 
-export default connect(null, {
-  createUser,
-})(AddCandidates);
+export default AddCandidates;

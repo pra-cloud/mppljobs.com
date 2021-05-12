@@ -1,52 +1,52 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import { useHistory } from "react-router";
-import { getAdminDetails } from "../../actions/adminActions";
-const Navbar = (props) => {
-  const [name, setName] = useState(localStorage.getItem("name"));
-  const history = useHistory();
+import React from "react";
+import { Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
+const Navbar = (props) => {
+  const name = localStorage.getItem("name");
+
+  // const selector = useSelector(state=>state)
+  const dispatch = useDispatch();
   return (
     <div>
-      <nav className="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
-        <div className="navbar-menu-wrapper d-flex align-items-stretch justify-content-between">
-          <ul className="navbar-nav mr-lg-2 d-none d-lg-flex">
-            <li className="nav-item nav-toggler-item">
+      <nav className='navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row'>
+        <div className='navbar-menu-wrapper d-flex align-items-stretch justify-content-between'>
+          <ul className='navbar-nav mr-lg-2 d-none d-lg-flex'>
+            <li className='nav-item nav-toggler-item'>
               <button
-                className="navbar-toggler align-self-center"
-                type="button"
-                data-toggle="minimize"
-              >
-                <span className="mdi mdi-menu"></span>
+                className='navbar-toggler align-self-center'
+                type='button'
+                data-toggle='minimize'>
+                <span className='mdi mdi-menu'></span>
               </button>
             </li>
-            <li className="nav-item nav-search d-none d-lg-flex">
-              <div className="input-group">
-                <div className="input-group-prepend">
-                  <span className="input-group-text" id="search">
-                    <i className="mdi mdi-magnify"></i>
+            <li className='nav-item nav-search d-none d-lg-flex'>
+              <div className='input-group'>
+                <div className='input-group-prepend'>
+                  <span className='input-group-text' id='search'>
+                    <i className='mdi mdi-magnify'></i>
                   </span>
                 </div>
                 <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search"
-                  aria-label="search"
-                  aria-describedby="search"
+                  type='text'
+                  className='form-control'
+                  placeholder='Search'
+                  aria-label='search'
+                  aria-describedby='search'
                 />
               </div>
             </li>
           </ul>
-          <div className="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            <a className="navbar-brand brand-logo" href="index.html">
-              <img src="./MPPL_logo.png" alt="logo" height="100px" />
-            </a>
-            <a className="navbar-brand brand-logo-mini" href="index.html">
-              <img src="./1.png" alt="logo" width="150px" />
-            </a>
+          <div className='text-center navbar-brand-wrapper d-flex align-items-center justify-content-center'>
+            <Link className='navbar-brand brand-logo' to='/'>
+              <img src='./MPPL_logo.png' alt='logo' height='100px' />
+            </Link>
+
+            <Link className='navbar-brand brand-logo-mini' to='/'>
+              <img src='./1.png' alt='logo' width='150px' />
+            </Link>
           </div>
-          <ul className="navbar-nav navbar-nav-right">
+          <ul className='navbar-nav navbar-nav-right'>
             {/* <li className="nav-item dropdown">
               <a
                 className="nav-link count-indicator dropdown-toggle"
@@ -114,40 +114,40 @@ const Navbar = (props) => {
               </div>
             </li>
              */}
-            <li className="nav-item nav-profile dropdown">
+            <li className='nav-item nav-profile dropdown'>
               <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                data-toggle="dropdown"
-                id="profileDropdown"
-              >
-                <img src="../../images/faces/face5.jpg" alt="profile" />
-                <span className="nav-profile-name">{name}</span>
+                className='nav-link dropdown-toggle'
+                href='https://www.toodecimal.com/'
+                data-toggle='dropdown'
+                id='profileDropdown'>
+                <img src='../../images/faces/face5.jpg' alt='profile' />
+                <span className='nav-profile-name'>{name}</span>
               </a>
               <div
-                className="dropdown-menu dropdown-menu-right navbar-dropdown"
-                aria-labelledby="profileDropdown"
-              >
-                <a className="dropdown-item">
-                  <i className="mdi mdi-settings text-primary"></i>
+                className='dropdown-menu dropdown-menu-right navbar-dropdown'
+                aria-labelledby='profileDropdown'>
+                <Link className='dropdown-item' to='/'>
+                  <i className='mdi mdi-settings text-primary'></i>
                   Visit Site
-                </a>
-                <div className="dropdown-divider"></div>
-                <a className="dropdown-item">
-                  <i className="mdi mdi-settings text-primary"></i>
+                </Link>
+
+                <div className='dropdown-divider'></div>
+                <Link className='dropdown-item' to='/profile'>
+                  <i className='mdi mdi-settings text-primary'></i>
                   View Profile
-                </a>
-                <div className="dropdown-divider"></div>
-                <a
-                  className="dropdown-item"
+                </Link>
+                <div className='dropdown-divider'></div>
+
+                <button
+                  className='dropdown-item'
                   onClick={() => {
-                    localStorage.removeItem("token");
-                    history.push("/");
-                  }}
-                >
-                  <i className="mdi mdi-logout text-primary"></i>
+                    sessionStorage.removeItem("x-auth-token");
+                    localStorage.removeItem("x-auth-token");
+                    dispatch({ type: "LOGOUT" });
+                  }}>
+                  <i className='mdi mdi-logout text-primary'></i>
                   Logout
-                </a>
+                </button>
               </div>
             </li>
             {/* <li className="nav-item nav-settings d-none d-lg-flex">
@@ -155,13 +155,12 @@ const Navbar = (props) => {
                 <i className="mdi mdi-dots-horizontal"></i>
               </a>
             </li> */}
-            <li className="nav-item nav-toggler-item-right d-lg-none">
+            <li className='nav-item nav-toggler-item-right d-lg-none'>
               <button
-                className="navbar-toggler align-self-center"
-                type="button"
-                data-toggle="offcanvas"
-              >
-                <span className="mdi mdi-menu"></span>
+                className='navbar-toggler align-self-center'
+                type='button'
+                data-toggle='offcanvas'>
+                <span className='mdi mdi-menu'></span>
               </button>
             </li>
           </ul>
@@ -171,10 +170,4 @@ const Navbar = (props) => {
   );
 };
 
-const mapStateToProps = (state) => ({
-  admin: state.admin.admin,
-});
-
-export default connect(mapStateToProps, {
-  getAdminDetails,
-})(Navbar);
+export default Navbar;

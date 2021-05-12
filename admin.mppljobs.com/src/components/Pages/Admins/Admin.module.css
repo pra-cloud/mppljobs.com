@@ -1,0 +1,39 @@
+.access__div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 60vw;
+  justify-content: space-between;
+  margin-top: 25px;
+  margin-left: 1.5rem;
+}
+
+.access__label {
+  font-size: 0.9rem !important;
+  margin-left: 0.2rem;
+  margin-right: 1rem;
+  margin-top: 3px;
+}
+
+.access__div--input {
+  margin-left: 32px;
+}
+
+.admin--access__name {
+  margin-bottom: 1rem;
+}
+.admin--access {
+  padding: 1rem;
+  text-align: center;
+}
+
+.admin--access__role {
+  font-size: 1.1rem;
+}
+
+.admin--access-divison {
+  width: 20vw;
+  height: 2px;
+  background-color: gray;
+  margin-bottom: 2rem;
+}

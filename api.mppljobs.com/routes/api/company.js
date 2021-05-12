@@ -23,10 +23,11 @@ const upload = multer({
 //@DESC GET DETAIL BY ID
 router.get("/details/:id", async (req, res) => {
   try {
-    const company = await Company.findById(req.params.id);
+    let company = await Company.findById(req.params.id);
     if (!company) {
       return res.json({ msg: "No Companies Found!" });
     }
+
     res.json(company);
   } catch (error) {
     console.log(error.message);
@@ -50,7 +51,7 @@ router.get("/all", async (req, res) => {
     if (cmp.length == 0) {
       return res.json({ msg: "No Companies Found!" });
     }
-    res.json(cmp);
+    res.json({ status: "success", cmp });
   } catch (error) {
     console.log(error.message);
   }
@@ -73,7 +74,7 @@ router.post("/create", upload.single("Logo"), async (req, res) => {
     AboutCompany,
     CompanyHireRate,
   } = req.body;
-  console.log(req.body);
+
   var companyFields = {
     PostedJobs: [],
   };
@@ -88,7 +89,7 @@ router.post("/create", upload.single("Logo"), async (req, res) => {
       companyFields.CompanyDescription = CompanyDescription;
     if (JoiningDate) companyFields.JoiningDate = JoiningDate;
     if (HeadOffice) companyFields.HeadOffice = HeadOffice;
-    if (OtherOffices) companyFields.OtherOffices = OtherOffices;
+    if (OtherOffices) companyFields.OtherOffices = JSON.parse(OtherOffices);
     if (Validity) companyFields.Validity = Validity;
     if (Website) companyFields.Website = Website;
     if (req.file) {
@@ -115,18 +116,72 @@ router.post("/create", upload.single("Logo"), async (req, res) => {
   }
 });
 
+router.patch("/update/:id", upload.single("Logo"), async (req, res) => {
+  const {
+    CompanyName,
+    CIN,
+    CompanyDescription,
+    JoiningDate,
+    HeadOffice,
+    OtherOffices,
+    Validity,
+    Website,
+    CompanyEmail,
+    CompanyContact,
+    AboutCompany,
+    CompanyHireRate,
+  } = req.body;
+  var companyFields = {};
+  try {
+    if (CompanyContact) companyFields.CompanyContact = CompanyContact;
+    if (CompanyHireRate) companyFields.CompanyHireRate = CompanyHireRate;
+    if (AboutCompany) companyFields.AboutCompany = AboutCompany;
+    if (CompanyEmail) companyFields.CompanyEmail = CompanyEmail;
+    if (CompanyName) companyFields.CompanyName = CompanyName;
+    if (CIN) companyFields.CIN = CIN;
+    if (CompanyDescription)
+      companyFields.CompanyDescription = CompanyDescription;
+    if (JoiningDate) companyFields.JoiningDate = JoiningDate;
+    if (HeadOffice) companyFields.HeadOffice = HeadOffice;
+    if (OtherOffices) companyFields.OtherOffices = JSON.parse(OtherOffices);
+    if (Validity) companyFields.Validity = Validity;
+    if (Website) companyFields.Website = Website;
+    if (req.file) {
+      companyFields.Logo = `http://${req.headers.host}/Company/${req.file.filename}`;
+    }
+
+    const company = await Company.findOneAndUpdate(
+      { _id: req.params.id },
+      { $set: companyFields },
+      { new: true }
+    );
+
+    if (!company) {
+      return res.json({ status: "failure" });
+    }
+
+    res.json({ status: "success", company });
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
 //@DELETE Route
 //@DESC Delete a Company By ID
 router.delete("/delete/:id", async (req, res) => {
-  try {
-    await Company.findOneAndDelete(req.params.id);
-    res.json({ msg: "Company Deleted!" });
-  } catch (error) {
-    console.log(error.message);
-    if (error.kind == "ObjectId") {
-      return res.json({ msg: "Please Enter a Valid ID" });
-    }
-  }
+  Company.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ msg: "Company Deleted!" }))
+    .catch((err) => res.status(400).json("Error: " + err));
+
+  // try {
+  //   await Company.findOneAndDelete(req.params.id);
+  //   res.json({ msg: "Company Deleted!" });
+  // } catch (error) {
+  //   console.log(error.message);
+  //   if (error.kind == "ObjectId") {
+  //     return res.json({ msg: "Please Enter a Valid ID" });
+  //   }
+  // }
 });
 
 //@Router GET InActive Employers
@@ -142,11 +197,12 @@ router.get("/inActive", async (req, res) => {
       }
     });
     if (cmps.length == 0) {
-      return res.json({ msg: "No Companies Found!" });
+      return res.json({ status: "failure", msg: "No Companies Found!" });
     }
-    res.json(cmps);
+    res.json({ status: "success", cmps });
   } catch (error) {
     console.log(error.message);
+    res.json({ status: "failure", msg: "Error" });
   }
 });
 
@@ -154,22 +210,32 @@ router.get("/inActive", async (req, res) => {
 //@GET User as per Pagination
 router.get("/users/:page/:perPage", async (req, res) => {
   try {
-    var page = parseInt(req.params.page);
-    var perPage = parseInt(req.params.perPage);
-    var users = await Company.find();
-    var len = users.length;
-    if (users.length == 0) {
-      return res.json({ msg: "No Users Found!" });
-    }
-    if (perPage * page < users.length) {
-      var user2 = await Company.find()
-        .limit(perPage + 1)
-        .skip(perPage * page + 1);
-    }
-    user = await Company.find()
-      .limit(perPage)
-      .skip(perPage * page);
-    res.json({ users: users, length: len });
+    // var page = parseInt(req.params.page);
+    // var perPage = parseInt(req.params.perPage);
+    // var users = await Company.find();
+    // var len = users.length;
+    // if (users.length == 0) {
+    //   return res.json({ msg: "No Users Found!" });
+    // }
+    // if (perPage * page < users.length) {
+    //   console.log(Date().now);
+    //   var user2 = await Company.find({ Validity: { $gte: Date.now() } })
+    //     .limit(perPage + 1)
+    //     .skip(perPage * page + 1);
+    // }
+    // user = await Company.find()
+    //   .limit(perPage)
+    //   .skip(perPage * page);
+
+    const page = req.params.page * 1 || 1;
+    const limit = req.params.perPage * 1 || 10;
+    const skip = (page - 1) * limit;
+
+    const users = await Company.find({ Validity: { $gte: Date.now() } })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({ users });
   } catch (error) {
     console.log(error.message);
   }

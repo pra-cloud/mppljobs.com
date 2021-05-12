@@ -26,6 +26,9 @@ const ConsultantSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  banReason: {
+    type: String,
+  },
 });
 
 module.exports = Consultant = mongoose.model("Consultant", ConsultantSchema);

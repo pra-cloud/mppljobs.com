@@ -1,62 +1,67 @@
-import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import React, { useEffect, useState } from "react";
 import { getInactiveJobs } from "../../../actions/adminActions";
-import Navbar from "../../Navbar/Navbar";
-import Sidebar from "../../Sidebar/Sidebar";
 
-const InactiveEmployers = (props) => {
+const InactiveEmployers = () => {
+  const [inactiveJobs, setInactiveJobs] = useState([]);
+
+  const getJobs = async () => {
+    const jobs = await getInactiveJobs();
+    if (jobs) {
+      setInactiveJobs(jobs);
+    }
+  };
+
   useEffect(() => {
-    props.getInactiveJobs();
-  });
+    getJobs();
+  }, []);
   return (
     <div>
-      <div class="sidebar-light">
-        <div class="container-scroller">
-          <Navbar />
-          <div class="container-fluid page-body-wrapper">
-            <Sidebar />
-            <div class="main-panel">
-              <div class="content-wrapper">
-                <div class="card">
-                  <div class="card-body">
-                    <h4 class="card-title">Employers</h4>
-                    <div class="row">
-                      <div class="col-12">
-                        <div class="table-responsive">
-                          <table class="table">
-                            <thead>
-                              <tr>
-                                <th>Company</th>
-                                <th>Email ID</th>
-                                <th>Contact</th>
-                                <th>Website</th>
-                                <th>Subscription</th>
-                                {/* <th>Actions</th> */}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {!Array.isArray(props.jobs) ? (
-                                <p>No Old Jobs</p>
-                              ) : (
-                                props.jobs.map((jobs) => {
-                                  return (
-                                    <tr>
-                                      <td>{jobs.CompanyName}</td>
-                                      <td>{jobs.ContactEmail}</td>
-                                      <td>{jobs.ContactNumber}</td>
-                                      <td>
-                                        <a href="https://toodecimal.com/">
-                                          www.toodecimal.com
-                                        </a>
-                                      </td>
-                                      <td>
-                                        <label class="badge badge-danger">
-                                          Expired
-                                        </label>
-                                      </td>
-                                      {/* <td>
+      <div className='main-panel'>
+        <div className='content-wrapper'>
+          <div className='card'>
+            <div className='card-body'>
+              <h4 className='card-title'>Jobs</h4>
+              <div className='row'>
+                <div className='col-12'>
+                  <div className='table-responsive'>
+                    <table className='table'>
+                      <thead>
+                        <tr>
+                          <th>Company</th>
+                          <th>Email ID</th>
+                          <th>Contact</th>
+                          <th>Website</th>
+                          <th>Subscription</th>
+                          {/* <th>Actions</th> */}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inactiveJobs.length === 0 ? (
+                          <tr>
+                            <td>
+                              <p>No Old Jobs</p>
+                            </td>
+                          </tr>
+                        ) : (
+                          inactiveJobs.map((jobs) => {
+                            return (
+                              <tr key={jobs._id}>
+                                <td>{jobs.CompanyName}</td>
+                                <td>{jobs.ContactEmail}</td>
+                                <td>{jobs.ContactNumber}</td>
+                                <td>
+                                  <a href='https://toodecimal.com/'>
+                                    www.toodecimal.com
+                                  </a>
+                                </td>
+                                <td>
+                                  <label className='badge badge-danger'>
+                                    Expired
+                                  </label>
+                                </td>
+                                {/* <td>
                                         <button
-                                          class="btn btn-dark btn-rounded"
+                                          className="btn btn-dark btn-rounded"
                                           style={{
                                             padding: "10px",
                                             paddingLeft: "15px",
@@ -66,40 +71,35 @@ const InactiveEmployers = (props) => {
                                           View
                                         </button>
                                       </td> */}
-                                    </tr>
-                                  );
-                                })
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-              <footer class="footer">
-                <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                  <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
-                    Copyright © 2021{" "}
-                    <a href="https://www.toodecimal.com" target="_blank">
-                      Too Decimal
-                    </a>
-                    . All rights reserved.
-                  </span>
-                </div>
-              </footer>
             </div>
           </div>
         </div>
+        <footer className='footer'>
+          <div className='d-sm-flex justify-content-center justify-content-sm-between'>
+            <span className='text-muted text-center text-sm-left d-block d-sm-inline-block'>
+              Copyright © 2021{" "}
+              <a
+                href='https://www.toodecimal.com'
+                rel='noreferrer'
+                target='_blank'>
+                Too Decimal
+              </a>
+              . All rights reserved.
+            </span>
+          </div>
+        </footer>
       </div>
     </div>
   );
 };
 
-const mapStateToProps = (state) => ({
-  jobs: state.admin.jobs,
-});
-export default connect(mapStateToProps, {
-  getInactiveJobs,
-})(InactiveEmployers);
+export default InactiveEmployers;

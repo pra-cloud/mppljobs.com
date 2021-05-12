@@ -10,7 +10,7 @@ const moment = require("moment");
 const JobQuestions = require("../../models/JobQuestions");
 const SavedJobs = require("../../models/SavedJobs");
 sgMail.setApiKey(
-  "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"
+  "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"
 );
 
 //@DESC Create Job
@@ -32,6 +32,7 @@ router.post("/", async (req, res) => {
     Location,
     PublishType,
     Remarks,
+    Validity,
     Description,
     SalaryRange,
     Distance,
@@ -43,10 +44,14 @@ router.post("/", async (req, res) => {
     PostingType,
   } = req.body;
   const jobFields = {};
+
+  console.log(req.body.Questions);
+
   try {
     if (Category) jobFields.Category = Category;
     if (Positions) jobFields.Positions = Positions;
     if (SalaryRange) jobFields.SalaryRange = SalaryRange;
+    if (Validity) jobFields.Validity = Validity;
     if (Distance) jobFields.Distance = Distance;
     if (PreviousExp) jobFields.PreviousExp = PreviousExp;
     if (CompanyHireRate) jobFields.CompanyHireRate = CompanyHireRate;
@@ -75,13 +80,16 @@ router.post("/", async (req, res) => {
     if (Remarks) jobFields.Remarks = Remarks;
     if (CompanyName) jobFields.CompanyName = CompanyName;
 
+    console.log("Question", jobFields.Questions);
+
+    // console.log(("Location", jobFields.Location));
     var company = await Company.findOne({ CompanyName: CompanyName });
     if (company) {
       console.log(company);
       jobFields.Logo = company.Logo;
       var job = new Job(jobFields);
       await job.save();
-      return res.json({ msg: "Jon Creadted", job: job });
+      return res.json({ msg: "Job Created", job: job });
     } else {
       return res.json({ msg: "Create the Company First" });
     }
@@ -127,7 +135,7 @@ router.get("/unApprovedJobs", auth, async (req, res) => {
     if (job.length == 0) {
       return res.json({ msg: "There is No UnApproved Jobs!" });
     }
-    res.json(job);
+    res.json({ status: "success", jobs: job });
   } catch (error) {
     console.log(error.message);
   }
@@ -229,26 +237,26 @@ router.get("/approve/:id", auth, async (req, res) => {
           new: true,
         }
       );
-      const msg = {
-        to: job.ContactEmail,
-        from: "vedant.pruthi.io@gmail.com",
-        subject: "Job Approved",
-        text: "First Message via Send Grid",
-        html:
-          "<b>Hey there</b>" +
-          job.ContactPerson +
-          " Your Job is Approved and now Public to Everyone!" +
-          "<br>Thankyou For Using Mangalam Services",
-      };
+      // const msg = {
+      //   to: job.ContactEmail,
+      //   from: "jaskiratsingh772@gmail.com",
+      //   subject: "Job Approved",
+      //   text: "First Message via Send Grid",
+      //   html:
+      //     "<b>Hey there</b>" +
+      //     job.ContactPerson +
+      //     " Your Job is Approved and now Public to Everyone!" +
+      //     "<br>Thankyou For Using Mangalam Services",
+      // };
 
-      sgMail
-        .send(msg)
-        .then(() => {
-          console.log("Email Sent", msg);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      // sgMail
+      //   .send(msg)
+      //   .then(() => {
+      //     console.log("Email Sent", msg);
+      //   })
+      //   .catch((error) => {
+      //     console.log(error);
+      //   });
       return res.json({ msg: "Job Approved", data: job });
     }
   } catch (error) {
@@ -281,14 +289,15 @@ router.get("/all", async (req, res) => {
       return res.json({ msg: "No Jobs Posted Yet" });
     }
     var mJobs = jobs.filter((job) => {
-      if (job.jobStatus == "Approved" && Date.now() < job.Validity) {
+      if (job.jobStatus === "Approved" && Date.now() < job.Validity) {
         return job;
       }
     });
     if (mJobs.length == 0) {
       return res.json({ msg: "No Jobs" });
     }
-    res.json(mJobs);
+    let x = mJobs.length;
+    res.json({ status: "success", mJobs });
   } catch (error) {
     console.log(error.message);
   }
@@ -332,7 +341,7 @@ router.get("/apply/:id", auth, async (req, res) => {
         await application.save();
         const msg = {
           to: user.email + "",
-          from: "vedant.pruthi.io@gmail.com",
+          from: "jaskiratsingh772@gmail.com",
           subject: "Job Applied Successfully",
           text: "First Message via Send Grid",
           html:
@@ -358,8 +367,7 @@ router.get("/apply/:id", auth, async (req, res) => {
         const applications = await Applications.find({ userID: req.user.id });
         if (applications.length > 1) {
           return res.json({
-            msg:
-              "You cant apply to this anymore as your plan Doesnt Support this!",
+            msg: "You cant apply to this anymore as your plan Doesnt Support this!",
           });
         } else {
           var applicationFields = {};
@@ -368,28 +376,28 @@ router.get("/apply/:id", auth, async (req, res) => {
 
           const application = new Applications(applicationFields);
           await application.save();
-          const msg = {
-            to: user.email,
-            from: "vedant.pruthi.io@gmail.com",
-            subject: "Job Applied Successfully",
-            text: "First Message via Send Grid",
-            html:
-              "<b>Hey there</b>" +
-              user.name +
-              " Thankyou for Applyying" +
-              "Your Application ID is :" +
-              application.id +
-              "<br>Thankyou For Using Mangalam Services",
-          };
+          // const msg = {
+          //   to: user.email,
+          //   from: "jaskiratsingh772@gmail.com",
+          //   subject: "Job Applied Successfully",
+          //   text: "First Message via Send Grid",
+          //   html:
+          //     "<b>Hey there</b>" +
+          //     user.name +
+          //     " Thankyou for Applyying" +
+          //     "Your Application ID is :" +
+          //     application.id +
+          //     "<br>Thankyou For Using Mangalam Services",
+          // };
 
-          sgMail
-            .send(msg)
-            .then(() => {
-              console.log("Email Sent", msg);
-            })
-            .catch((error) => {
-              console.log(error);
-            });
+          // sgMail
+          //   .send(msg)
+          //   .then(() => {
+          //     console.log("Email Sent", msg);
+          //   })
+          //   .catch((error) => {
+          //     console.log(error);
+          //   });
 
           return res.json({
             msg: "Job Applied SuccessFully",
@@ -475,7 +483,7 @@ router.delete("/:id", auth, (req, res) => {
 
 //@PUT Route
 //@DESC Update Job by ID
-router.put("/update/:id", async (req, res) => {
+router.patch("/update/:id", async (req, res) => {
   const {
     CompanyName,
     Designation,
@@ -535,18 +543,21 @@ router.put("/update/:id", async (req, res) => {
     if (CompanyName) jobFields.CompanyName = CompanyName;
     if (PostingType) jobFields.PostingType = PostingType;
     jobFields.date = Date.now();
-    var company = await Company.findOne({ CompanyName: CompanyName });
-    if (company) {
-      jobFields.Logo = company.Logo;
-      let job = await Jobs.findByIdAndUpdate(
-        { _id: req.params.id },
-        { $set: jobFields },
-        { new: true }
-      );
-      return res.json({ msg: "Job Updated", job: job });
-    } else {
-      return res.json({ msg: "Company not Created Yet!" });
+    // var company = await Company.findOne({ CompanyName: CompanyName });
+    // if (company) {
+    // jobFields.Logo = company.Logo;
+    console.log(req.params.id);
+    let job = await Jobs.findByIdAndUpdate(
+      { _id: req.params.id },
+      { $set: jobFields },
+      { new: true }
+    );
+    if (job) {
+      return res.json({ status: "success", job: job });
     }
+    // } else {
+    //   return res.json({ status: "failure", msg: "Company not Created Yet!" });
+    // }
   } catch (error) {
     console.log(error.message);
   }
@@ -574,10 +585,10 @@ router.get("/expired", async (req, res) => {
         return job;
       }
     });
-    if (jobs.length == 0) {
-      return res.json({ msg: "No Inactive Jobs" });
+    if (!jobs) {
+      return res.json({ status: "failure", msg: "No Inactive Jobs" });
     }
-    res.json(jobs);
+    res.json({ status: "success", jobs });
   } catch (error) {
     console.log(error.message);
   }
@@ -587,22 +598,75 @@ router.get("/expired", async (req, res) => {
 //@GET User as per Pagination
 router.get("/users/:page/:perPage", async (req, res) => {
   try {
-    var page = parseInt(req.params.page);
-    var perPage = parseInt(req.params.perPage);
-    var users = await Jobs.find();
-    var len = users.length;
-    if (users.length == 0) {
-      return res.json({ msg: "No Users Found!" });
-    }
-    if (perPage * page < users.length) {
-      var user2 = await Jobs.find()
-        .limit(perPage + 1)
-        .skip(perPage * page + 1);
-    }
-    user = await Jobs.find()
-      .limit(perPage)
-      .skip(perPage * page);
-    res.json({ users: users, length: len });
+    // var page = parseInt(req.params.page);
+    // var perPage = parseInt(req.params.perPage);
+    // var users = await Jobs.find();
+    // var len = users.length;
+    // if (users.length == 0) {
+    //   return res.json({ msg: "No Users Found!" });
+    // }
+    // if (perPage * page < users.length) {
+    //   var user2 = await Jobs.find()
+    //     .limit(perPage + 1)
+    //     .skip(perPage * page + 1);
+    // }
+    // user = await Jobs.find()
+    //   .limit(perPage)
+    //   .skip(perPage * page);
+    // res.json({ users: users, length: len });
+
+    const page = req.params.page * 1 || 1;
+    const limit = req.params.perPage * 1 || 10;
+    const skip = (page - 1) * limit;
+
+    const jobs = await Jobs.find({
+      jobStatus: "Approved",
+      Validity: { $gte: Date.now() },
+    })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({ len: jobs.length, status: "success", jobs });
+  } catch (error) {
+    console.log(error.message);
+  }
+});
+
+router.post("/filterPage", async (req, res) => {
+  try {
+    console.log("adad");
+    const page = req.body.page * 1 || 1;
+    const limit = req.body.perPage * 1 || 10;
+    let skip = (page - 1) * limit;
+    const hireRate = req.body.CompanyHireRate || 0;
+    const companyHireRate = parseInt(hireRate);
+    const searchOption = "" + req.body.searchOption;
+
+    // console.log(req.body.filters);
+
+    if (req.body._id) skip = 0;
+
+    const jobs = await Jobs.find({
+      $and: [
+        { _id: { $gte: req.body._id || "608f9c3688d9e92204ee3639" } },
+        {
+          $and: [
+            {
+              $or: [
+                { JobTitle: { $regex: searchOption } },
+                { CompanyName: { $regex: searchOption } },
+              ],
+            },
+            req.body.filters,
+            { CompanyHireRate: { $gt: companyHireRate } },
+          ],
+        },
+      ],
+    })
+      .skip(skip)
+      .limit(limit * 4);
+
+    res.json({ length: jobs.length, status: "success", jobs });
   } catch (error) {
     console.log(error.message);
   }

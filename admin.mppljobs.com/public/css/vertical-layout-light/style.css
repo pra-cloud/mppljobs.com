@@ -19968,6 +19968,17 @@ button.bg-dark:focus,
   border-radius: 0.2rem !important;
 }
 
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .rounded,
 .loader-demo-box {
   border-radius: 0.25rem !important;
@@ -35547,6 +35558,7 @@ div.tagsinput span.tag a {
   min-height: calc(100vh - 70px);
   display: -webkit-flex;
   display: flex;
+  width: 100%;
   -webkit-flex-direction: row;
   flex-direction: row;
   padding-left: 0;
@@ -35562,7 +35574,7 @@ div.tagsinput span.tag a {
 
 .main-panel {
   transition: width 0.25s ease, margin 0.25s ease;
-  width: calc(100% - 235px);
+  width: 86.5vw;
   min-height: calc(100vh - 70px);
   display: -webkit-flex;
   display: flex;
@@ -35578,16 +35590,16 @@ div.tagsinput span.tag a {
 }
 
 .content-wrapper {
+  width: 97.5%;
   background: #f1f2f7;
   padding: 2.5rem 2.5rem;
-  width: 100%;
   -webkit-flex-grow: 1;
   flex-grow: 1;
 }
 
 /* Sidebar */
 .sidebar {
-  min-height: calc(100vh - 70px);
+  min-height: 80vh;
   background: #5e2572;
   font-family: "Roboto", sans-serif;
   font-weight: 500;

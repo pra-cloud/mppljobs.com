@@ -1,14 +1,14 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import Navbar from "../../Navbar/Navbar";
-import Sidebar from "../../Sidebar/Sidebar";
-import makeToast from "../../Toaster";
+import { confirmAlert } from "react-confirm-alert";
+import makeToast from "../../../Toaster";
+import ConfirmaDialog from "./ConfirmaDialog";
+import UpdateDialog from "./UpdateDialog";
+import { URL } from "../../../actions/adminActions";
 
 const Categories = () => {
   const [name, setName] = useState("");
   const [categories, setCategories] = useState([]);
-  const [btn, setBtn] = useState("Submit");
-  const [id, setId] = useState("");
 
   const addCategory = async (formData) => {
     try {
@@ -17,22 +17,25 @@ const Categories = () => {
           "Content-Type": "application/json",
         },
       };
-      const res = await axios.post(
-        "http://api.mppljobs.com/api/category",
-        formData,
-        config
-      );
-      if (res.data) {
+      const res = await axios.post(`${URL}/api/category`, formData, config);
+      if (res.data.msg === "Category Created!") {
         makeToast("success", res.data.msg);
+        getCategories();
+        setName("");
+      } else if (res.data.msg === "Category already Present!") {
+        makeToast("error", res.data.msg);
       }
     } catch (error) {
-      console.log(error.message);
       makeToast("error", error.message);
     }
   };
   const getCategories = async () => {
     try {
-      const res = await axios.get("http://api.mppljobs.com/api/category");
+      const res = await axios.get(`${URL}/api/category`, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
       setCategories(res.data);
     } catch (error) {
       console.log(error.message);
@@ -40,13 +43,11 @@ const Categories = () => {
   };
   const deleteCategory = async (id) => {
     try {
-      await axios
-        .delete("http://api.mppljobs.com/api/category/delete/" + id)
-        .then(() => {
-          makeToast("success", "Deleted!");
-        });
+      await axios.delete(`${URL}/api/category/delete/${id}`).then(() => {
+        makeToast("success", "Deleted!");
+        getCategories();
+      });
     } catch (error) {
-      console.log(error.message);
       makeToast("error", error.message);
     }
   };
@@ -58,166 +59,188 @@ const Categories = () => {
         },
       };
       const res = await axios.put(
-        "http://api.mppljobs.com/api/category/update/" + id,
+        `${URL}/api/category/update/${id}`,
         formData,
         config
       );
       if (res.data) {
         makeToast("success", res.data.msg);
+        getCategories();
       }
     } catch (error) {
-      console.log(error.message);
       makeToast("error", error.message);
     }
   };
   useEffect(() => {
     getCategories();
-  });
+
+    return () => {};
+  }, []);
   return (
     <div>
-      <div class="sidebar-light">
-        <div class="container-scroller">
-          <Navbar />
-          <div class="container-fluid page-body-wrapper">
-            <Sidebar />
-            <div class="main-panel">
-              <div class="content-wrapper">
-                <div class="row">
-                  <div class="col-12 grid-margin">
-                    <div class="card">
-                      <div class="card-body">
-                        <h4 class="card-title">Categories</h4>
-                        <form class="form-sample">
-                          <div class="row">
-                            {/* <div class="col-md-6">
-                              <div class="form-group row">
-                                <label
-                                  class="col-sm-3"
-                                  for="exampleFormControlSelect2"
-                                  style={{ alignSelf: "center" }}
-                                >
-                                  ID
-                                </label>
-                                <div class="col-sm-9">
-                                  <input type="text" class="form-control" />
-                                </div>
-                              </div>
-                            </div> */}
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Category Name
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => {
-                                      setName(e.target.value);
-                                    }}
-                                    class="form-control"
-                                  />
-                                </div>
+      <div className='sidebar-light'>
+        <div className='container-scroller'>
+          <div className='main-panel'>
+            <div className='content-wrapper'>
+              <div className='row'>
+                <div className='col-12 grid-margin'>
+                  <div className='card'>
+                    <div className='card-body'>
+                      <h4 className='card-title'>Categories</h4>
+                      <form className='form-sample'>
+                        <div className='row'>
+                          <div className='col-md-6'>
+                            <div className='form-group row'>
+                              <label className='col-sm-3 col-form-label'>
+                                Category Name
+                              </label>
+                              <div className='col-sm-9'>
+                                <input
+                                  required
+                                  type='text'
+                                  value={name}
+                                  onChange={(e) => {
+                                    setName(e.target.value);
+                                  }}
+                                  className='form-control'
+                                />
                               </div>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (btn == "Submit") {
-                                addCategory({ name });
-                              } else {
-                                updateCategory(id, { name });
-                                setBtn("Submit");
-                              }
-                            }}
-                            class="btn btn-primary mr-2"
-                          >
-                            {btn}
-                          </button>
-                          <button class="btn btn-light">Cancel</button>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="content-wrapper" style={{ marginTop: "-100px" }}>
-                <div class="card">
-                  <div class="card-body">
-                    <h4 class="card-title">Categories</h4>
-                    <div class="row">
-                      <div class="col-12">
-                        <div class="table-responsive">
-                          <table class="table">
-                            <thead>
-                              <tr>
-                                <th>ID</th>
-                                <th>Category Name</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {!Array.isArray(categories) ? (
-                                <p>No Categories Created</p>
-                              ) : (
-                                categories.map((category) => {
-                                  return (
-                                    <tr>
-                                      <td>{category._id}</td>
-                                      <td>{category.name}</td>
-                                      <td>
-                                        <button
-                                          class="btn  btn-rounded btn-dark"
-                                          style={{
-                                            padding: "9px",
-                                            marginRight: "5px",
-                                          }}
-                                          onClick={() => {
-                                            setName(category.name);
-                                            setId(category._id);
-                                            setBtn("Update");
-                                          }}
-                                        >
-                                          Edit
-                                        </button>
-                                        <button
-                                          class="btn  btn-rounded btn-danger"
-                                          style={{
-                                            padding: "9px",
-                                          }}
-                                          onClick={() => {
-                                            deleteCategory(category._id);
-                                          }}
-                                        >
-                                          Delete
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  );
-                                })
-                              )}
-                            </tbody>
-                          </table>
                         </div>
+                        <button
+                          type='submit'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (name === "") {
+                              return makeToast(
+                                "error",
+                                "Please fill the field"
+                              );
+                            }
+                            addCategory({ name });
+                          }}
+                          className='btn btn-primary mr-2'>
+                          Submit
+                        </button>
+                        <button
+                          type='reset'
+                          className='btn btn-light'
+                          onClick={() => {
+                            setName("");
+                          }}>
+                          Cancel
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className='content-wrapper' style={{ marginTop: "-100px" }}>
+              <div className='card'>
+                <div className='card-body'>
+                  <h4 className='card-title'>Categories</h4>
+                  <div className='row'>
+                    <div className='col-12'>
+                      <div className='table-responsive'>
+                        <table className='table'>
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>Category Name</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {!Array.isArray(categories) ? (
+                              <tr>
+                                <td>
+                                  <p>No Categories Created</p>
+                                </td>
+                              </tr>
+                            ) : (
+                              categories.map((category) => {
+                                return (
+                                  <tr key={category._id}>
+                                    <td>{category._id}</td>
+                                    <td>{category.name}</td>
+                                    <td>
+                                      <button
+                                        className='btn  btn-rounded btn-dark'
+                                        style={{
+                                          padding: "9px",
+                                          marginRight: "5px",
+                                        }}
+                                        onClick={() => {
+                                          confirmAlert({
+                                            customUI: ({ onClose }) => {
+                                              return (
+                                                <UpdateDialog
+                                                  perform={updateCategory}
+                                                  close={onClose}
+                                                  selectedName={category.name}
+                                                  id={category._id}
+                                                />
+                                              );
+                                            },
+                                          });
+                                        }}>
+                                        Edit
+                                      </button>
+                                      <button
+                                        className='btn  btn-rounded btn-danger'
+                                        style={{
+                                          padding: "9px",
+                                        }}
+                                        onClick={() => {
+                                          confirmAlert({
+                                            customUI: ({ onClose }) => {
+                                              return (
+                                                <ConfirmaDialog
+                                                  perform={() => {
+                                                    deleteCategory(
+                                                      category._id
+                                                    );
+                                                  }}
+                                                  action='Delete'
+                                                  role={category.name}
+                                                  close={onClose}
+                                                />
+                                              );
+                                            },
+                                          });
+                                        }}>
+                                        Delete
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <footer class="footer">
-                <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                  <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
-                    Copyright © 2021{" "}
-                    <a href="https://www.toodecimal.com" target="_blank">
-                      Too Decimal
-                    </a>
-                    . All rights reserved.
-                  </span>
-                </div>
-              </footer>
             </div>
+
+            <footer className='footer'>
+              <div className='d-sm-flex justify-content-center justify-content-sm-between'>
+                <span className='text-muted text-center text-sm-left d-block d-sm-inline-block'>
+                  Copyright © 2021{" "}
+                  <a
+                    href='https://www.toodecimal.com'
+                    rel='noreferrer'
+                    target='_blank'>
+                    Too Decimal
+                  </a>
+                  . All rights reserved.
+                </span>
+              </div>
+            </footer>
           </div>
         </div>
       </div>

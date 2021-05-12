@@ -14,8 +14,10 @@ const MongoOplog = require("mongo-oplog");
 const pdf = require("html-pdf");
 const pdfTemplate = require("./templates");
 const auth = require("./middleware/auth");
-
-app.use(require("cors")());
+const cors = require("cors");
+const adminToken=require("./middleware/adminToken")
+const generateUser = require("./middleware/generateUserToken");
+app.use(cors());
 
 const methodOverride = require("method-override");
 const Resume = require("./models/Resume");
@@ -77,6 +79,26 @@ const upload2 = multer({
 app.use("/Notes", express.static(path.join(__dirname, "/Notes")));
 app.use("/Resumes", express.static(path.join(__dirname, "/Resumes")));
 app.use("/Company", express.static(path.join(__dirname, "/Company")));
+
+//newly made
+app.get("/verifytokens", adminToken, async (req, res) => {
+  
+  if (req.user.type === 'admin') {
+    var admin;
+  console.log(req.user);
+  try {
+    admin = await Admin.findById({ _id: req.user.id });
+    if (!admin) {
+      return res.status(404).json("error");
+    }
+    return res.status(200).json({msg:true,admin});
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+  }
+  return res.json({ msg: false });
+});
+
 
 app.post("/createVideo", auth, upload.single("file"), async (req, res) => {
   const { resumeTitle } = req.body;
@@ -206,6 +228,9 @@ app.get("/confirmation/:token", async (req, res, next) => {
           msg: "This user has already been verified",
         });
       }
+      else{
+        console.log("dadaf")
+      }
       user.isVerified = true;
       user.save((err) => {
         if (err) {
@@ -216,21 +241,30 @@ app.get("/confirmation/:token", async (req, res, next) => {
             id: user.id,
           },
         };
-        jwt.sign(
-          payload,
-          config.get("jwtSecret"),
-          {
-            expiresIn: 360000,
-          },
-          (err, token) => {
-            if (err) throw err;
-            res.json({ msg: "OTP Successfully Verified!", tkn: token });
-          }
-        );
+
+        try{
+          generateUserToken(req,res,user.id,user.email,"candidate");
+       }
+       catch(err){
+         res.status(500).json(err);
+       }
+
+        // jwt.sign(
+        //   payload,
+        //   config.get("jwtSecret"),
+        //   {
+        //     expiresIn: 360000,
+        //   },
+        //   (err, token) => {
+        //     if (err) throw err;
+        //     res.json({ msg: "OTP Successfully Verified!", tkn: token });
+        //   }
+        // );
       });
     });
   });
 });
+
 
 //Routes
 app.use("/api/consultant", require("./routes/api/consultant"));

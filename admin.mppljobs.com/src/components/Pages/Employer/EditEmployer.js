@@ -1,388 +1,401 @@
-import React, { useEffect, useState } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useState } from "react";
 import { connect } from "react-redux";
 import { useHistory } from "react-router";
-import { createCompany } from "../../../actions/adminActions";
-import Navbar from "../../Navbar/Navbar";
-import Sidebar from "../../Sidebar/Sidebar";
-import makeToast from "../../Toaster";
+import { updateCompanyById } from "../../../actions/adminActions";
+
+import InputArray from "../Candidates/InputArray";
 
 const EditEmployer = (props) => {
   const [edit, setEdit] = useState(false);
-  const [company, setCompany] = useState(
-    JSON.parse(localStorage.getItem("company"))
-  );
-  // useEffect(() => {
-  //   setCompany(JSON.parse(localStorage.getItem("company")));
-  // });
 
-  const [CompanyName, setCompanyName] = useState(company.CompanyName || "");
-  const [CompanyEmail, setCompanyEmail] = useState(company.CompanyEmail || "");
+  const selectedCompany = props.location && props.location.state;
+
+  const [locationArray, setLocationArray] = useState(
+    selectedCompany.OtherOffices || []
+  );
+
+  const [locationVal, setLocationVal] = useState("");
+
+  const [CompanyName, setCompanyName] = useState(
+    selectedCompany.CompanyName || ""
+  );
+  const [CompanyEmail, setCompanyEmail] = useState(
+    selectedCompany.CompanyEmail || ""
+  );
   const [CompanyContact, setCompanyContact] = useState(
-    company.CompanyContact || ""
+    selectedCompany.CompanyContact || ""
   );
-  const [Website, setWebsite] = useState(company.Website || "");
+  const [Website, setWebsite] = useState(selectedCompany.Website || "");
   const [CompanyDescription, setCompanyDescription] = useState(
-    company.CompanyDescription || ""
+    selectedCompany.CompanyDescription || ""
   );
-  const [JoiningDate, setJoiningDate] = useState(company.JoiningDate || "");
-  const [Validity, setValidity] = useState(company.Validity || "");
-  const [HeadOffice, setHeadOffice] = useState(company.HeadOffice || "");
-  const [Latitude, setLatitude] = useState(company.Latitude || "");
-  const [Longitude, setLongitude] = useState(company.Longitude || "");
-  const [Locations, setLocations] = useState(company.Locations || "");
-  const [CIN, setCIN] = useState(company.CIN);
+  const [JoiningDate, setJoiningDate] = useState(
+    selectedCompany.JoiningDate || ""
+  );
+  const [Validity, setValidity] = useState(selectedCompany.Validity || "");
+  const [HeadOffice, setHeadOffice] = useState(
+    selectedCompany.HeadOffice || ""
+  );
+  const [Latitude, setLatitude] = useState(selectedCompany.Latitude || "");
+  const [Longitude, setLongitude] = useState(selectedCompany.Longitude || "");
+  const [CIN, setCIN] = useState(selectedCompany.CIN);
   const history = useHistory();
   const [saved, setSaved] = useState();
-  const [inputBox, setInputBox] = useState(
-    <div class="col-sm-9">
-      <form class="form-inline repeater">
-        <div data-repeater-list="group-a">
-          <div data-repeater-item class="d-flex mb-2">
-            <label class="sr-only" for="inlineFormInputGroup1">
-              Users
-            </label>
-            <div class="input-group mb-2 mr-sm-2 mb-sm-0">
-              <div class="input-group-prepend">
-                <span class="input-group-text">@</span>
-              </div>
-              <input
-                type="text"
-                class="form-control form-control-sm"
-                id="inlineFormInputGroup1"
-                placeholder="Add user"
-                value={Locations}
-                onChange={(e) => {
-                  setLocations(e.target.value);
-                }}
-              />
-            </div>
-            <button type="submit" class="btn btn-success btn-sm">
-              Submit
-            </button>
-            <button
-              data-repeater-delete
-              type="button"
-              class="btn btn-danger btn-sm icon-btn ml-2"
-            >
-              <i class="mdi mdi-delete"></i>
-            </button>
-          </div>
-        </div>
-        <button
-          data-repeater-create
-          type="button"
-          onClick={() => {
-            let arr = [];
-            arr = inputArr;
-            arr.push(inputBox);
-            setInputArr(arr);
-            console.log(inputArr);
-          }}
-          class="btn btn-info btn-sm icon-btn ml-2 mb-2"
-        >
-          <i class="mdi mdi-plus"></i>
-        </button>
-      </form>
-    </div>
-  );
+  const [Logo, setLogo] = useState(selectedCompany.Logo || "");
 
-  const [inputArr, setInputArr] = useState([]);
+  const uploadFile = (e) => {
+    if (e.target.files[0] == null) {
+      console.log("Logo Not Uploaded");
+    } else {
+      setLogo(e.target.files[0]);
+    }
+  };
+
+  const deleteLocation = (enteredSkill) => {
+    setLocationArray((prevState) => {
+      return prevState.filter((skill) => {
+        return skill !== enteredSkill;
+      });
+    });
+  };
+
+  const submitHandler = async () => {
+    const locations = JSON.stringify(locationArray);
+
+    const formData = new FormData();
+    formData.append("CompanyName", CompanyName);
+    formData.append("CompanyDescription", CompanyDescription);
+    formData.append("CIN", CIN);
+    formData.append("JoiningDate", JoiningDate);
+    formData.append("HeadOffice", HeadOffice);
+    formData.append("Website", Website);
+    formData.append("Validity", Validity);
+    formData.append("Logo", Logo);
+    formData.append("OtherOffices", locations);
+
+    setSaved(await updateCompanyById(formData, selectedCompany._id));
+    if (saved) {
+      history.goBack();
+    } else {
+      history.goBack();
+    }
+  };
 
   return (
     <div>
-      <div class="sidebar-light">
-        <div class="container-scroller">
-          <Navbar />
-          <div class="container-fluid page-body-wrapper">
-            <Sidebar />
-            <div class="main-panel">
-              <div class="content-wrapper">
-                <div class="row">
-                  <div class="col-12 grid-margin">
-                    <div class="card">
-                      <div class="card-body">
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            padding: "10px",
-                          }}
-                        >
-                          <h4 class="card-title">EDIT EMPLOYER</h4>
-                          <button
-                            type="s-ubmit"
-                            class="btn btn-primary mr-2"
-                            style={{ padding: "10px" }}
-                            onClick={() => {
-                              if (!edit) {
-                                setEdit(true);
-                              } else {
-                                setEdit(false);
-                              }
-                            }}
-                          >
-                            {!edit ? "Edit" : "Cancel"}
-                          </button>
+      <div className='main-panel'>
+        <div className='content-wrapper'>
+          <div className='row'>
+            <div className='col-12 grid-margin'>
+              <div className='card'>
+                <div className='card-body'>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      padding: "10px",
+                    }}>
+                    <h4 className='card-title'>EDIT EMPLOYER</h4>
+                    <button
+                      type='s-ubmit'
+                      className='btn btn-primary mr-2'
+                      style={{ padding: "10px" }}
+                      onClick={() => {
+                        if (!edit) {
+                          setEdit(true);
+                        } else {
+                          setEdit(false);
+                        }
+                      }}>
+                      {!edit ? "Edit" : "Cancel"}
+                    </button>
+                  </div>
+                  <form className='form-sample'>
+                    <div className='row'>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label
+                            className='col-sm-3'
+                            style={{ alignSelf: "center" }}>
+                            Company Name
+                          </label>
+                          <div className='col-sm-9'>
+                            <input
+                              disabled={!edit}
+                              type='text'
+                              value={CompanyName}
+                              onChange={(e) => {
+                                setCompanyName(e.target.value);
+                              }}
+                              className='form-control'
+                            />
+                          </div>
                         </div>
-                        <form class="form-sample">
-                          <div class="row">
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label
-                                  class="col-sm-3"
-                                  for="exampleFormControlSelect2"
-                                  style={{ alignSelf: "center" }}
-                                >
-                                  Company Name
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    disabled={!edit}
-                                    type="text"
-                                    value={CompanyName}
-                                    onChange={(e) => {
-                                      setCompanyName(e.target.value);
-                                    }}
-                                    class="form-control"
-                                  />
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Company Description
+                          </label>
+                          <div className='col-sm-9'>
+                            <textarea
+                              className='form-control'
+                              id='exampleTextarea1'
+                              rows='4'
+                              value={CompanyDescription}
+                              onChange={(e) => {
+                                setCompanyDescription(e.target.value);
+                              }}
+                              disabled={!edit}></textarea>
+                          </div>
+                        </div>
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Joining Date
+                          </label>
+                          <div className='input-group date datepicker col-sm-9'>
+                            <input
+                              type='date'
+                              className='form-control'
+                              value={JoiningDate}
+                              onChange={(e) => {
+                                setJoiningDate(e.target.value);
+                              }}
+                              disabled={!edit}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Head Office
+                          </label>
+                          <div className='col-sm-9'>
+                            <input
+                              type='text'
+                              className='form-control'
+                              value={HeadOffice}
+                              onChange={(e) => {
+                                setHeadOffice(e.target.value);
+                              }}
+                              disabled={!edit}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Latitude
+                          </label>
+                          <div className='col-sm-9'>
+                            <input
+                              type='text'
+                              className='form-control'
+                              value={Latitude}
+                              onChange={(e) => {
+                                setLatitude(e.target.value);
+                              }}
+                              disabled={!edit}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Longitude
+                          </label>
+                          <div className='col-sm-9'>
+                            <input
+                              type='text'
+                              className='form-control'
+                              value={Longitude}
+                              onChange={(e) => {
+                                setLongitude(e.target.value);
+                              }}
+                              disabled={!edit}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Validity
+                          </label>
+                          <div
+                            id='datepicker-popup'
+                            className='input-group col-sm-9'>
+                            <input
+                              type='date'
+                              className='form-control'
+                              value={Validity}
+                              onChange={(e) => {
+                                setValidity(e.target.value);
+                              }}
+                              disabled={!edit}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label
+                            className='col-sm-3'
+                            style={{ alignSelf: "center" }}>
+                            Website
+                          </label>
+                          <div className='col-sm-9'>
+                            <input
+                              type='text'
+                              className='form-control'
+                              value={Website}
+                              onChange={(e) => {
+                                setWebsite(e.target.value);
+                              }}
+                              disabled={!edit}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label
+                            className='col-sm-3'
+                            style={{ alignSelf: "center" }}>
+                            Other Location
+                          </label>
+                          <div className='col-sm-9'>
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                alignItems: "center",
+                                marginBottom: "1rem",
+                              }}>
+                              <div className='input-group mb-2 mr-sm-2 mb-sm-0'>
+                                <div className='input-group-prepend'>
+                                  <span className='input-group-text'>@</span>
                                 </div>
+                                <input
+                                  type='text'
+                                  className='form-control form-control-sm'
+                                  value={locationVal}
+                                  onChange={(e) => {
+                                    setLocationVal(e.target.value);
+                                  }}
+                                  placeholder='Add Locations'
+                                  disabled={!edit}
+                                />
                               </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Company Description
-                                </label>
-                                <div class="col-sm-9">
-                                  <textarea
-                                    class="form-control"
-                                    id="exampleTextarea1"
-                                    rows="4"
-                                    value={CompanyDescription}
-                                    onChange={(e) => {
-                                      setCompanyDescription(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  ></textarea>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Joining Date
-                                </label>
-                                <div
-                                  id="datepicker-popup"
-                                  class="input-group date datepicker col-sm-9"
-                                >
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value={JoiningDate}
-                                    onChange={(e) => {
-                                      setJoiningDate(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  />
-                                  <span class="input-group-addon input-group-append border-left">
-                                    <span class="mdi mdi-calendar input-group-text"></span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Head Office
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value={HeadOffice}
-                                    onChange={(e) => {
-                                      setHeadOffice(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Latitude
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value={Latitude}
-                                    onChange={(e) => {
-                                      setLatitude(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Longitude
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value={Longitude}
-                                    onChange={(e) => {
-                                      setLongitude(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  Validity
-                                </label>
-                                <div
-                                  id="datepicker-popup"
-                                  class="input-group date datepicker col-sm-9"
-                                >
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value="sample"
-                                    value={Validity}
-                                    onChange={(e) => {
-                                      setValidity(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  />
-                                  <span class="input-group-addon input-group-append border-left">
-                                    <span class="mdi mdi-calendar input-group-text"></span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label
-                                  class="col-sm-3"
-                                  for="exampleFormControlSelect2"
-                                  style={{ alignSelf: "center" }}
-                                >
-                                  Website
-                                </label>
-                                <div class="col-sm-9">
-                                  <input
-                                    type="text"
-                                    class="form-control"
-                                    value={Website}
-                                    onChange={(e) => {
-                                      setWebsite(e.target.value);
-                                    }}
-                                    disabled={!edit}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label
-                                  class="col-sm-3"
-                                  for="exampleFormControlSelect2"
-                                  style={{ alignSelf: "center" }}
-                                >
-                                  Locations
-                                </label>
-                                {inputArr.length != 0
-                                  ? inputArr.map((arr) => {
-                                      return <>{arr}</>;
-                                    })
-                                  : inputBox}
-                              </div>
+                              <button
+                                data-repeater-create
+                                type='button'
+                                style={{
+                                  marginTop: "0.4rem",
+                                }}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (locationVal === "") {
+                                    return;
+                                  }
+                                  setLocationArray((prevState) => {
+                                    return [...prevState, locationVal];
+                                  });
+                                  setLocationVal("");
+                                }}
+                                className='btn btn-info btn-sm icon-btn ml-2 mb-2'>
+                                <i className='mdi mdi-plus'></i>
+                              </button>
                             </div>
 
-                            <div class="col-md-6">
-                              <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">
-                                  File
-                                </label>
-                                <div class="col-sm-9 grid-margin stretch-card">
-                                  <div class="card" style={{ width: "20px" }}>
-                                    <div class="card-body">
-                                      <h4 class="card-title">Dropzone</h4>
-                                      <input
-                                        style={{ width: "290px" }}
-                                        type="file"
-                                        disabled={!edit}
-                                        // action="https://www.bootstrapdash.com/file-upload"
-                                        class="dropzone"
-                                        id="my-awesome-dropzone"
-                                      ></input>
-                                    </div>
-                                  </div>
-                                </div>
+                            {locationArray &&
+                              locationArray.map((loc) => (
+                                <InputArray
+                                  key={Math.random()}
+                                  text={loc}
+                                  onDelete={deleteLocation}
+                                />
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className='col-md-6'>
+                        <div className='form-group row'>
+                          <label className='col-sm-3 col-form-label'>
+                            Logo
+                          </label>
+                          <div className='col-sm-9 grid-margin stretch-card'>
+                            <div className='card' style={{ width: "20px" }}>
+                              <div className='card-body'>
+                                <h4 className='card-title'>Dropzone</h4>
+                                <input
+                                  style={{ width: "290px" }}
+                                  type='file'
+                                  disabled={!edit}
+                                  onChange={(e) => {
+                                    uploadFile(e);
+                                  }}
+                                  // action="https://www.bootstrapdash.com/file-upload"
+                                  className='dropzone'
+                                  id='my-awesome-dropzone'></input>
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={async () => {
-                              setSaved(
-                                await props.createCompany({
-                                  CompanyName,
-                                  Website,
-                                  CompanyDescription,
-                                  HeadOffice,
-                                  Latitude,
-                                  Longitude,
-                                  CIN,
-                                })
-                              );
-                              if (saved) {
-                                history.push("/employers");
-                              } else {
-                                history.push("/employers");
-                              }
-                            }}
-                            type="button"
-                            class="btn btn-primary mr-2"
-                          >
-                            {!edit ? "Submit" : "Save"}
-                          </button>
-                          <button class="btn btn-light">Cancel</button>
-                        </form>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        submitHandler();
+                      }}
+                      type='submit'
+                      className='btn btn-primary mr-2'>
+                      {!edit ? "Submit" : "Save"}
+                    </button>
+                    <button
+                      type='button'
+                      className='btn btn-light'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        history.goBack();
+                      }}>
+                      Cancel
+                    </button>
+                  </form>
                 </div>
               </div>
-              <footer class="footer">
-                <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                  <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">
-                    Copyright © 2021{" "}
-                    <a href="https://www.toodecimal.com" target="_blank">
-                      Too Decimal
-                    </a>
-                    . All rights reserved.
-                  </span>
-                </div>
-              </footer>
             </div>
           </div>
         </div>
+        <footer className='footer'>
+          <div className='d-sm-flex justify-content-center justify-content-sm-between'>
+            <span className='text-muted text-center text-sm-left d-block d-sm-inline-block'>
+              Copyright © 2021{" "}
+              <a
+                href='https://www.toodecimal.com'
+                rel='noreferrer'
+                target='_blank'>
+                Too Decimal
+              </a>
+              . All rights reserved.
+            </span>
+          </div>
+        </footer>
       </div>
     </div>
   );
 };
 
 export default connect(null, {
-  createCompany,
+  // createCompany,
 })(EditEmployer);

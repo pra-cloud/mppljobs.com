@@ -1,0 +1,54 @@
+.modal {
+  border-radius: 20%;
+}
+
+.access__div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 77vw;
+  justify-content: space-around;
+  margin-top: 25px;
+  margin-left: 0.5rem;
+}
+
+.access__label {
+  font-size: 0.9rem !important;
+  margin-left: 0.2rem;
+  margin-right: 1rem;
+  margin-top: 3px;
+}
+
+.access__div--input {
+  margin-left: 32px;
+}
+
+.admin--access__name {
+  margin-bottom: 1rem;
+}
+.dialogbox {
+  text-align: center;
+}
+
+.admin--access__role {
+  font-size: 1.1rem;
+}
+
+.admin--access-divison {
+  width: 20vw;
+  height: 2px;
+  background-color: gray;
+  margin-bottom: 2rem;
+}
+
+.warning--btn {
+  margin-top: 3rem;
+}
+
+.btn__yes {
+  margin-right: 1rem;
+}
+
+.btn__no {
+  margin-left: 1rem;
+}

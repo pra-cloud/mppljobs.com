@@ -1,409 +1,245 @@
 import axios from "axios";
-import makeToast from "../components/Toaster";
-import {
-  APPROVE_JOBS,
-  GET_ADMINS,
-  GET_ADMIN_DETAILS,
-  GET_ALL_COMPANIES,
-  GET_ALL_JOBS,
-  GET_ALL_USERS,
-  GET_ALL_WEBINARS,
-  GET_CLIENTS,
-  GET_CONSULTANTS,
-  GET_MOCK_TESTS,
-  GET_NOTES,
-  GET_USER_DETAILS,
-  LOAD_UNAPPROVED_JOBS,
-  LOGIN_USER,
-  SEND_EMAIL,
-} from "./types";
+import makeToast from "../Toaster";
+import { GET_USER_DETAILS } from "./types";
 
-// const url =
+export const URL = "http://localhost:5000";
 
-const url = "http://localhost:5000";
+// var role = JSON.parse(localStorage.getItem("adminRole"));
 
-var role = JSON.parse(localStorage.getItem("adminRole"));
-
-export const getBannedUser = () => async (dispatch) => {
+export const Verifytokens = async (tokens) => {
   try {
-    const config = {
+    let config = {
       headers: {
-        "x-auth-token": localStorage.getItem("token"),
+        "x-auth-token": tokens,
       },
     };
-    const res = await axios.get(url + "/api/user/getBannedUser", config);
-    dispatch({ type: GET_ALL_USERS, payload: res.data });
+    const res = await axios.get(URL + "/verifytokens", config, {
+      useCredentials: true,
+    });
+    return res.data;
   } catch (error) {
     console.log(error.message);
   }
 };
-export const updateWebinarByID = (formData, id) => async (dispatch) => {
+
+export const loginAction = async (cred) => {
   try {
     const config = {
       headers: {
         "Content-Type": "application/json",
       },
     };
-    const res = await axios.put(
-      url + "/api/webinar/update/" + id,
-      formData,
-      config
-    );
-    if (res.data.msg == "Webinar Updated!") {
+
+    const res = await axios.post(URL + "/api/admin/login/", cred, config);
+
+    if (
+      res.data.msg === "Invalid Credentials!" ||
+      res.data.msg === "Admin Doesnt Exists!"
+    ) {
+      makeToast("error", res.data.msg);
+    }
+    if (res.data.token) {
       makeToast("success", "Success");
+      if (cred.remember) localStorage.setItem("x-auth-token", res.data.token);
+      else sessionStorage.setItem("x-auth-token", res.data.token);
+    }
+    return res;
+  } catch (error) {
+    console.log(error);
+  }
+};
+export const getData = async (tokens) => {
+  tokens =
+    localStorage.getItem("x-auth-token") ||
+    sessionStorage.getItem("x-auth-token");
+  try {
+    let config = {
+      headers: {
+        "x-auth-token": tokens,
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/getdata", config, {
+      useCredentials: true,
+    });
+    return res.data;
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const createJob = async (formData) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.post(URL + "/api/jobs", formData, config);
+    if (res.data.msg === "Job Created") {
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    return false;
+  }
+};
+
+export const approveJobs = async (id) => {
+  try {
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/jobs/approve/" + id, config);
+    if (res.data) {
+      makeToast("success", "Job Approved");
       return true;
     }
   } catch (error) {
     makeToast("error", error.message);
-
     console.log(error.message);
     return false;
   }
 };
 
-export const updateUserById = (formData, id) => async (dispatch) => {
+export const deleteJobByID = async (id) => {
   try {
     const config = {
       headers: {
-        "Content-Type": "application/json",
+        "x-auth-token": localStorage.getItem("x-auth-token"),
       },
     };
-    const res = await axios.put(
-      url + "/api/user/update/" + id,
-      formData,
-      config
-    );
-    if (res.data) {
+
+    console.log(URL + "/api/jobs/" + id);
+    const res = await axios.delete(URL + "/api/jobs/" + id, config);
+
+    if (res.data === "Job deleted.") {
+      makeToast("success", "Success");
       return true;
     }
   } catch (error) {
     console.log(error.message);
+    makeToast("error", error.message);
     return false;
   }
 };
 
-export const getUserDetailsByID = (id) => async (dispatch) => {
-  console.log(id);
+export const filterJobs = async (formData) => {
   try {
-    const res = await axios.get(url + "/api/admin/user/details/" + id);
+    const res = await axios.post(`${URL}/api/jobs/filterPage`, formData);
 
-    dispatch({ type: GET_USER_DETAILS, payload: res.data });
+    return res.data.jobs;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const deleteCompanyByID = async (id) => {
+  try {
+    const res = await axios.delete(URL + "/api/company/delete/" + id);
+
+    if (res.data.msg === "Company Deleted!") {
+      makeToast("success", "Success");
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    makeToast("error", "Error");
+    return false;
+  }
+};
+
+export const getCompanyDetails = async (id) => {
+  try {
+    const res = await axios.get(`${URL}/api/company/details/${id}`);
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const createAdmin = async (formData) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.post(`${URL}/api/admin`, formData, config);
+
+    if (res.data.msg === "Admin Created Successfully") {
+      makeToast("success", "Admin created Successfully");
+      return true;
+    } else if (res.data.msg === "Admin Already Exists") {
+      makeToast("error", "Admin Already Exists");
+      return false;
+    }
+  } catch (error) {
+    makeToast("error", "Error");
+  }
+};
+
+export const getAllJobs = async () => {
+  try {
+    const res = await axios.get(URL + "/api/jobs/all");
+    if (res.data.status === "success") {
+      return res.data.mJobs;
+    }
   } catch (error) {
     console.log(error.message);
   }
 };
 
-export const getAdminDetails = () => async (dispatch) => {
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.get(url + "/api/admin/me", config);
-    dispatch({ type: GET_ADMIN_DETAILS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const getClients = () => async (dispatch) => {
-  // console.log("function getclients working");
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.get(url + "/api/user", config);
-    dispatch({ type: GET_CLIENTS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const loginAdmin = (formData) => async (dispatch) => {
-  // console.log("function login admin working");
-  // console.log("Login Fun()  ");
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    };
-    const res = await axios.post(url + "/api/admin/login", formData, config);
-    console.log("Login ", res.data.token);
-    dispatch({ type: LOGIN_USER, payload: res.data.token });
-  } catch (error) {
-    console.log("Auth Error (login function) ", error.message);
-  }
-};
-
-export const registerUser = (formData) => async (dispatch) => {
-  // console.log("function register user working");
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-    const res = await axios.post(url + "/api/admin/", formData, config);
-    console.log("Register ", res.data.token);
-    dispatch({ type: LOGIN_USER, payload: res.data.token });
-  } catch (error) {
-    console.log("Auth Error (Register function) ", error.message);
-  }
-};
-
-export const sendEmailToCustomer = (formData) => async (dispatch) => {
-  // console.log("function send email to customer working");
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-    const res = await axios.post(
-      url + "/api/admin/sendEmail",
-      formData,
-      config
-    );
-    console.log(res.data);
-    dispatch({ type: SEND_EMAIL });
-  } catch (error) {
-    console.log(error.response);
-  }
-};
-
-export const getUnApprovedJobs = () => async (dispatch) => {
+export const getUnApprovedJobs = async () => {
   // console.log("function get unapproved jobs working");
   try {
     const config = {
       headers: {
-        "x-auth-token": localStorage.getItem("token"),
+        "x-auth-token": localStorage.getItem("x-auth-token"),
       },
     };
-    const res = await axios.get(url + "/api/jobs/unApprovedJobs", config);
-    dispatch({ type: LOAD_UNAPPROVED_JOBS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
+    const res = await axios.get(URL + "/api/jobs/unApprovedJobs", config);
 
-export const approveJobs = (id) => async (dispatch) => {
-  // console.log("function approve jobs  working");
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.get(url + "/api/jobs/approve/" + id, config);
-    console.log(res.data);
-    if (res.data) {
-      makeToast("success", "Success");
-    }
-    dispatch({ type: APPROVE_JOBS });
-  } catch (error) {
-    makeToast("error", error.message);
-    console.log(error.message);
-  }
-};
-
-export const banUserById = (id) => async (dispatch) => {
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.get(url + "/api/user/banUser/" + id, config);
-    if (res.data.msg == "User Banned!") {
-      makeToast("success", "Banned");
+    if (res.data.status === "success") {
+      return res.data.jobs;
     }
   } catch (error) {
     console.log(error.message);
-    makeToast("error", error.message);
   }
 };
 
-export const unBanUserById = (id) => async (dispatch) => {
+export const updateJobById = async (formData, id) => {
   try {
     const config = {
       headers: {
-        "x-auth-token": localStorage.getItem("token"),
+        "Content-type": "application/json",
       },
     };
-    const res = await axios.get(url + "/api/user/unBanUser/" + id, config);
-    if (res.data.msg == "User UnBanned!") {
-      makeToast("success", "UnBanned");
-    }
-  } catch (error) {
-    console.log(error.message);
-    makeToast("error", error.message);
-  }
-};
-
-export const createNotes = (formData) => async (dispatch) => {
-  // console.log("function create notes working");
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.post(url + "/api/notes/create", formData, config);
-    if (res.data) {
-      makeToast("success", "Success");
-      return true;
-    }
-  } catch (error) {
-    makeToast("error", error.message);
-    console.log(error.message);
-    return false;
-  }
-};
-
-export const getNotes = () => async (dispatch) => {
-  // console.log("function get notes working");
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.get(url + "/api/notes/all", config);
-    dispatch({ type: GET_NOTES, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const updateNotesById = (formData, id) => async (dispatch) => {
-  // console.log("function update notes by id working");
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-        "Content-Type": "application/json",
-      },
-    };
-    const res = await axios.put(
-      url + "/api/notes/update/" + id,
+    const res = await axios.patch(
+      `${URL}/api/jobs/update/${id}`,
       formData,
       config
     );
-    if (res.data) {
-      makeToast("success", "Success");
-
+    if (res.data.status === "success") {
+      makeToast("success", "Job Updated");
       return true;
     }
-  } catch (error) {
-    makeToast("error", error.message);
 
+    if (res.data.status === "failure") makeToast("error", res.data.msg);
     return false;
-  }
-};
-
-export const deleteNotesById = (id) => async (dispatch) => {
-  // console.log("function delete notes by id working");
-  try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.delete(url + "/api/notes/delete/" + id, config);
-    if (res.data) {
-      makeToast("success", "Success");
-
-      return true;
-    }
   } catch (error) {
-    makeToast("error", error.message);
-
-    return false;
-  }
-};
-
-export const declineJob = (formData, id) => async (dispatch) => {
-  // console.log("function decline job working");
-  // console.log("decline job Function");
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.post(
-      url + "/api/admin/decline/" + id,
-      formData,
-      config
-    );
-    console.log(res.data);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const createJob = (formData) => async (dispatch) => {
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.post(url + "/api/jobs", formData, config);
-    if (res.data) {
-      console.log(res.data);
-      return true;
-    }
-  } catch (error) {
+    makeToast("error", "Error");
     console.log(error.message);
     return false;
   }
 };
 
-export const getAllJobs = () => async (dispatch) => {
-  try {
-    if (role.includes("All") || role.includes("Jobs")) {
-      const res = await axios.get(url + "/api/jobs/all");
-      dispatch({ type: GET_ALL_JOBS, payload: res.data });
-    }
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const createWebinars = (formData) => async (dispatch) => {
-  // console.log("function create webinars working");
-  try {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-    const res = await axios.post(
-      url + "/api/webinar/createWebinar",
-      formData,
-      config
-    );
-    if (res.data.msg == "Webinar Created!") {
-      makeToast("success", "Success");
-      return true;
-    }
-  } catch (error) {
-    console.log(error.message);
-    makeToast("error", error.message);
-    return false;
-  }
-};
-
-export const createCompany = (formData) => async (dispatch) => {
+export const createCompany = async (formData) => {
   try {
     // const config = {
     //   headers: {
@@ -411,10 +247,10 @@ export const createCompany = (formData) => async (dispatch) => {
     //   },
     // };
 
-    const res = await axios.post(url + "/api/company/create", formData);
+    const res = await axios.post(URL + "/api/company/create", formData);
     if (
-      res.data.msg == "Company Created!" ||
-      res.data.msg == "Company Updated!"
+      res.data.msg === "Company Created!" ||
+      res.data.msg === "Company Updated!"
     ) {
       makeToast("success", "Success");
 
@@ -428,61 +264,123 @@ export const createCompany = (formData) => async (dispatch) => {
   }
 };
 
-export const getAllCompanies = () => async (dispatch) => {
+export const updateCompanyById = async (formData, id) => {
   try {
-    const res = await axios.get(url + "/api/company/all");
-    dispatch({ type: GET_ALL_COMPANIES, payload: res.data });
+    const config = {
+      headers: {
+        "Content-type": "application/json",
+      },
+    };
+    const res = await axios.patch(
+      `${URL}/api/company/update/${id}`,
+      formData,
+      config
+    );
+    if (res.data.status === "success") {
+      makeToast("success", "Company Updated");
+      return true;
+    }
+
+    if (res.data.status === "failure") makeToast("error", "Error");
+    return false;
+  } catch (error) {
+    makeToast("error", "Error");
+    console.log(error.message);
+    return false;
+  }
+};
+
+export const getAllCompanies = async () => {
+  try {
+    const res = await axios.get(URL + "/api/company/all");
+    if (res.data.status === "success") {
+      return res.data.cmp;
+    }
   } catch (error) {
     console.log(error.message);
   }
 };
 
-export const getAllWebinars = () => async (dispatch) => {
+export const getAllCategories = async () => {
   try {
-    const res = await axios.get(url + "/api/webinar/all");
-    dispatch({ type: GET_ALL_WEBINARS, payload: res.data });
+    const res = await axios.get(`${URL}/api/category`);
+    console.log(res);
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getInactiveJobs = async () => {
+  try {
+    const res = await axios.get(URL + "/api/jobs/expired");
+    if (res.data.status === "success") {
+      return res.data.jobs;
+    }
   } catch (error) {
     console.log(error.message);
   }
 };
 
-export const getAllUsers = () => async (dispatch) => {
+export const updateAdminById = async (formData, id) => {
   try {
-    const res = await axios.get(url + "/api/admin/users");
-    dispatch({ type: GET_ALL_USERS, payload: res.data });
+    const config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+
+    const res = await axios.patch(
+      URL + "/api/admin/update/" + id,
+      formData,
+      config
+    );
+
+    if (res.data.msg) {
+      return makeToast("error", res.data.msg);
+    } else if (res.data.success) {
+      makeToast("success", res.data.success);
+      return true;
+    }
   } catch (error) {
-    console.log(error.message);
+    return makeToast("error", error.message);
   }
 };
 
-export const getMockTests = () => async (dispatch) => {
+export const banUserById = async (id, formData) => {
   try {
-    const res = await axios.get(url + "/api/test");
-    dispatch({ type: GET_MOCK_TESTS, payload: res.data });
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.post(
+      URL + "/api/user/banUser/" + id,
+      formData,
+      config
+    );
+    if (res.data.msg === "User Banned!") {
+      makeToast("success", "Banned");
+      return true;
+    }
   } catch (error) {
     console.log(error.message);
+    makeToast("error", error.message);
+    return false;
   }
 };
 
-export const getConsultants = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/consultant");
-    dispatch({ type: GET_CONSULTANTS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const createUser = (formData) => async (dispatch) => {
-  console.log(formData);
+export const createUser = async (formData) => {
   try {
     const config = {
       headers: {
         "Content-Type": "application/json",
       },
     };
-    const res = await axios.post(url + "/api/user", formData, config);
-    if (res.data.msg == "User Created!") {
+    const res = await axios.post(URL + "/api/user", formData, config);
+    if (res.status === 200) {
       makeToast("success", "Created");
       return true;
     }
@@ -495,19 +393,105 @@ export const createUser = (formData) => async (dispatch) => {
   }
 };
 
-export const createMockTests = (formData) => async (dispatch) => {
-  console.log(formData);
+export const getAllUsers = async () => {
+  try {
+    let config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/users", config);
+    return res.data;
+    // dispatch({ type: GET_ALL_USERS, payload: res.data });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const getBannedUser = async () => {
+  try {
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/user/getBannedUser", config);
+    return res.data;
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const getUserDetailsByID = (id) => async (dispatch) => {
+  console.log(id);
+  try {
+    let config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/user/details/" + id, config);
+
+    dispatch({ type: GET_USER_DETAILS, payload: res.data });
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const unBanUserById = async (id) => {
+  try {
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/user/unBanUser/" + id, config);
+    if (res.data.msg === "User UnBanned!") {
+      makeToast("success", "UnBanned");
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    makeToast("error", error.message);
+  }
+};
+
+export const updateUserById = async (formData, id) => {
   try {
     const config = {
       headers: {
         "Content-Type": "application/json",
       },
     };
-    const res = await axios.post(url + "/api/test/createMockTest", formData);
-    if (
-      res.data.msg == "Mock Test Created!" ||
-      res.data.msg == "Mock test Updated!"
-    ) {
+    const res = await axios.patch(
+      URL + "/api/user/update/" + id,
+      formData,
+      config
+    );
+    if (res.data.msg === "User Updated") {
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    return false;
+  }
+};
+
+export const banAdminById = async (id) => {
+  try {
+    let config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/banAccount/" + id, config);
+    if (res.data.msg === "Admin Blocked!") {
       makeToast("success", "Success");
       return true;
     }
@@ -518,8 +502,162 @@ export const createMockTests = (formData) => async (dispatch) => {
   }
 };
 
-export const createConsultant = (formData) => async (dispatch) => {
-  console.log(formData);
+export const getAdmins = async () => {
+  try {
+    let config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/allAdmins", config);
+    return res.data;
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const getBannedAdmins = async () => {
+  try {
+    let config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/bannedAdmins", config);
+
+    if (res.data.admins) {
+      return res.data.admins;
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const unBanAdmin = async (id) => {
+  try {
+    let config = {
+      headers: {
+        "x-auth-token":
+          localStorage.getItem("x-auth-token") ||
+          sessionStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/admin/unBanAccount/" + id, config);
+    if (res.data.msg === "Admin unBlocked!") {
+      makeToast("success", "Success");
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    return false;
+  }
+};
+
+export const createNotes = async (formData) => {
+  // console.log("function create notes working");
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.post(URL + "/api/notes/create", formData, config);
+    if (res.data) {
+      makeToast("success", "Success");
+      return true;
+    }
+  } catch (error) {
+    makeToast("error", error.message);
+    console.log(error.message);
+    return false;
+  }
+};
+
+export const deleteNotesById = async (id) => {
+  // console.log("function delete notes by id working");
+  try {
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.delete(URL + "/api/notes/delete/" + id, config);
+    if (res.data.status === "success") {
+      makeToast("success", "Success");
+      return true;
+    }
+  } catch (error) {
+    makeToast("error", error.message);
+    return false;
+  }
+};
+
+export const getAllNotes = async () => {
+  // console.log("function get notes working");
+  try {
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+      },
+    };
+    const res = await axios.get(URL + "/api/notes/all", config);
+    if (res.status === 200) {
+      return res.data;
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const updateNotesById = async (formData, id) => {
+  // console.log("function update notes by id working");
+  try {
+    const config = {
+      headers: {
+        "x-auth-token": localStorage.getItem("x-auth-token"),
+        "Content-Type": "application/json",
+      },
+    };
+    const res = await axios.put(
+      URL + "/api/notes/update/" + id,
+      formData,
+      config
+    );
+    if (res.data) {
+      makeToast("success", "Success");
+
+      return true;
+    }
+  } catch (error) {
+    makeToast("error", error.message);
+
+    return false;
+  }
+};
+
+export const banConsultantById = async (id, formData) => {
+  try {
+    const res = await axios.post(
+      URL + "/api/consultant/banConsultant/" + id,
+      formData
+    );
+    if (res.data.msg === "Consultant Banned!") {
+      makeToast("success", "Success");
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    makeToast("error", error.message);
+    return false;
+  }
+};
+
+export const createConsultant = async (formData) => {
   try {
     const config = {
       headers: {
@@ -527,11 +665,11 @@ export const createConsultant = (formData) => async (dispatch) => {
       },
     };
     const res = await axios.post(
-      url + "/api/consultant/createConsultant",
+      URL + "/api/consultant/createConsultant",
       formData,
       config
     );
-    if (res.data) {
+    if (res.status === 200) {
       return true;
     }
   } catch (error) {
@@ -540,52 +678,43 @@ export const createConsultant = (formData) => async (dispatch) => {
   }
 };
 
-export const deleteJobByID = (id) => async (dispatch) => {
+export const getBannedConsultants = async () => {
   try {
-    const config = {
-      headers: {
-        "x-auth-token": localStorage.getItem("token"),
-      },
-    };
-    const res = await axios.delete(url + "/api/jobs/" + id, config);
-    if (res.data == "Job deleted.") {
-      makeToast("success", "Success");
+    const res = await axios.get(URL + "/api/consultant/bannedConsultants");
+    if (res.data.consultants) {
+      return res.data.consultants;
     }
   } catch (error) {
     console.log(error.message);
-    makeToast("error", "Success");
   }
 };
 
-export const updateJobById = (formData, id) => async (dispatch) => {
-  console.log(formData);
+export const getConsultants = async () => {
   try {
-    const config = {
-      headers: {
-        "Content-type": "application/json",
-      },
-    };
-    const res = await axios.put(
-      url + "/api/jobs/update/" + id,
-      formData,
-      config
-    );
-    if (res.data) {
+    const res = await axios.get(URL + "/api/consultant");
+    if (res.status === 200) {
+      return res.data;
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const unBanConsultantById = async (id) => {
+  try {
+    const res = await axios.get(URL + "/api/consultant/unBanConsultant/" + id);
+    if (res.data.msg === "Consultant unBanned!") {
       makeToast("success", "Success");
-      console.log(res.data);
       return true;
     }
   } catch (error) {
-    makeToast("error", "Error");
-
     console.log(error.message);
+    makeToast("error", error.message);
     return false;
   }
 };
 
-export const updateConsultantByID = (formData, id) => async (dispatch) => {
-  console.log("ID : ", id);
-  console.log("passed Data", formData);
+export const updateConsultantByID = async (formData, id) => {
   try {
     const config = {
       headers: {
@@ -593,14 +722,15 @@ export const updateConsultantByID = (formData, id) => async (dispatch) => {
       },
     };
     const res = await axios.put(
-      url + "/api/consultant/updateConsultant/" + id,
+      URL + "/api/consultant/updateConsultant/" + id,
       formData,
       config
     );
-    if (res.data.msg == "Consultant Updated!") {
-      console.log(res.data);
-      makeToast("success", "Success");
+    if (res.data.success === "Consultant Updated") {
       return true;
+    }
+    if (res.data.msg) {
+      return false;
     }
   } catch (error) {
     console.log(error.message);
@@ -610,10 +740,34 @@ export const updateConsultantByID = (formData, id) => async (dispatch) => {
   }
 };
 
-export const deleteWebinarsById = (id) => async (dispatch) => {
+export const createWebinars = async (formData) => {
+  // console.log("function create webinars working");
   try {
-    const res = await axios.delete(url + "/api/webinar/delete/" + id);
-    if (res.data.msg == "Webinar Deleted!") {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const res = await axios.post(
+      URL + "/api/webinar/createWebinar",
+      formData,
+      config
+    );
+    if (res.data.msg === "Webinar Created!") {
+      makeToast("success", "Success");
+      return true;
+    }
+  } catch (error) {
+    console.log(error.message);
+    makeToast("error", error.message);
+    return false;
+  }
+};
+
+export const deleteWebinarsById = async (id) => {
+  try {
+    const res = await axios.delete(URL + "/api/webinar/delete/" + id);
+    if (res.data.msg === "Webinar Deleted!") {
       makeToast("success", "Deleted");
       return true;
     }
@@ -623,112 +777,60 @@ export const deleteWebinarsById = (id) => async (dispatch) => {
   }
 };
 
-export const deleteTestByID = (id) => async (dispatch) => {
+export const getAllWebinars = async () => {
   try {
-    const res = await axios.delete(url + "/api/test/delete/" + id);
-    if (res.data.msg == "Test Deleted!") {
-      makeToast("success", "Success");
+    const res = await axios.get(URL + "/api/webinar/all");
+    return res.data;
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const getInactiveWebinars = async () => {
+  try {
+    const res = await axios.get(URL + "/api/webinar/inActive");
+    if (res.data.status === "success") {
+      return res.data.webinar;
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const getInactiveEmployers = async () => {
+  try {
+    const res = await axios.get(URL + "/api/company/inActive");
+
+    if (res.data.status === "success") {
+      return res.data.cmps;
+    }
+  } catch (error) {
+    console.log(error.message);
+  }
+};
+
+export const updateWebinarByID = async (formData, id) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const res = await axios.put(
+      URL + "/api/webinar/update/" + id,
+      formData,
+      config
+    );
+    if (res.data.msg === "Webinar Updated!") {
+      makeToast("success", "Webinar Updated");
       return true;
     }
+
+    makeToast("error", "Error");
   } catch (error) {
-    console.log(error.message);
     makeToast("error", error.message);
+
+    console.log(error.message);
     return false;
-  }
-};
-
-export const banConsultantById = (id) => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/consultant/banConsultant/" + id);
-    if (res.data.msg == "Consultant Banned!") {
-      makeToast("success", "Success");
-    }
-  } catch (error) {
-    console.log(error.message);
-    makeToast("error", error.message);
-  }
-};
-
-export const unBanConsultantById = (id) => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/consultant/unBanConsultant/" + id);
-    if (res.data.msg == "Consultant unBanned!") {
-      makeToast("success", "Success");
-    }
-  } catch (error) {
-    console.log(error.message);
-    makeToast("error", error.message);
-  }
-};
-
-export const getBannedConsultants = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/consultant/bannedConsultants");
-    dispatch({ type: GET_CONSULTANTS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const getInactiveJobs = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/jobs/expired");
-    dispatch({ type: GET_ALL_JOBS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const getInactiveWebinars = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/webinar/inActive");
-    dispatch({ type: GET_ALL_WEBINARS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const getPastMocktests = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/test/inActive");
-    dispatch({ type: GET_MOCK_TESTS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const getAdmins = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/admin/allAdmins");
-    dispatch({ type: GET_ADMINS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const banAdmin = (id) => async () => {
-  try {
-    const res = await axios.get(url + "/api/admin/banAccount/" + id);
-    console.log(res.data);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const unBanAdmin = (id) => async () => {
-  try {
-    const res = await axios.get(url + "/api/admin/unBanAccount/" + id);
-    console.log(res.data);
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-export const getBannedAdmins = () => async (dispatch) => {
-  try {
-    const res = await axios.get(url + "/api/admin/bannedAdmins");
-    dispatch({ type: GET_ADMINS, payload: res.data });
-  } catch (error) {
-    console.log(error.message);
   }
 };

@@ -68,7 +68,7 @@ const JobSchema = new mongoose.Schema({
     ref: "User",
   },
   Questions: {
-    type: [Object],
+    type: Array,
   },
   PostingType: {
     type: String,

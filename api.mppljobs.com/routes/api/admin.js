@@ -4,7 +4,7 @@ const router = express.Router();
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const bcryptjs = require("bcryptjs");
-const auth = require("../../middleware/auth");
+const auth = require("../../middleware/auth-old");
 const User = require("../../models/User");
 const sgMail = require("@sendgrid/mail");
 const Jobs = require("../../models/Jobs");
@@ -16,9 +16,30 @@ const HigherQualification = require("../../models/HigherQualification");
 const SocialConnects = require("../../models/SocialConnects");
 const Resume = require("../../models/Resume");
 const moemnt = require("moment");
+const generateToken = require("../../middleware/generateToken");
+const verifyToken = require("../../middleware/verifytoken");
+
+// specefic vlidation email
+const adminToken = require("../../middleware/adminToken");
+const tokenEmailValidate = require("../../middleware/tokenEmailValidate");
+/// role validation middleware
+const employerRoleValidator = require("../../middleware/employerValidator");
+const jobsRoleValidator = require("../../middleware/jobsValidator");
+
+const candidateRoleValidator = require("../../middleware/candidatesRoleValidator");
+const notesRoleValidator = require("../../middleware/notesRoleValidator");
+const webinarRoleValidator = require("../../middleware/webinarRoleValidator");
+const consultantRoleValidator = require("../../middleware/consultantRoleValidator");
+
+/*
+for test of middleware
+router.post("/check",adminToken,(req,res)=>{
+  res.status(200).json({msg:"done"})
+})
+*/
 
 sgMail.setApiKey(
-  "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"
+  "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"
 );
 
 const genEmpID = () => {
@@ -32,24 +53,17 @@ const genEmpID = () => {
 
 //@TEST ROUTE
 //@GET User as per Pagination
-router.get("/users/:page/:perPage", async (req, res) => {
+router.get("/users/:page/:perPage", adminToken, async (req, res) => {
   try {
-    var page = parseInt(req.params.page);
-    var perPage = parseInt(req.params.perPage);
-    var users = await Admin.find({ banAccount: false });
-    var len = users.length;
-    if (users.length == 0) {
-      return res.json({ msg: "No Users Found!" });
-    }
-    if (perPage * page < users.length) {
-      var user2 = await Admin.find({ banAccount: false })
-        .limit(perPage + 1)
-        .skip(perPage * page + 1);
-    }
-    user = await Admin.find({ banAccount: false })
-      .limit(perPage)
-      .skip(perPage * page);
-    res.json({ users: users, length: len });
+    const page = req.params.page * 1 || 1;
+    const limit = req.params.perPage * 1 || 10;
+
+    const skip = (page - 1) * limit;
+    const admins = await Admin.find({ banAccount: false })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({ admins });
   } catch (error) {
     console.log(error.message);
   }
@@ -70,7 +84,8 @@ router.post("/test", async (req, res) => {
 
 //@Get Route
 //@DESC Get Current Admin Details
-router.get("/me", auth, async (req, res) => {
+//validation for admin type token and req.body.email should be same with token email
+router.get("/me", adminToken, tokenEmailValidate, async (req, res) => {
   try {
     const admin = await Admin.findById(req.user.id);
     if (!admin) {
@@ -84,7 +99,7 @@ router.get("/me", auth, async (req, res) => {
 
 //@GET Route
 //@DESC Get all the Admins
-router.get("/", auth, async (req, res) => {
+router.get("/", adminToken, async (req, res) => {
   try {
     const admins = await Admin.find({ banAccount: false });
     if (admins.length == 0) {
@@ -148,7 +163,7 @@ router.get("/user/details/:id", async (req, res) => {
 });
 
 //@GET Admins
-router.get("/allAdmins", async (req, res) => {
+router.get("/allAdmins", adminToken, async (req, res) => {
   try {
     const admin = await Admin.find({ banAccount: false });
     if (admin.length == 0) {
@@ -162,7 +177,7 @@ router.get("/allAdmins", async (req, res) => {
 
 //@POST Route
 //@DESC Create an Admin
-router.post("/", async (req, res) => {
+router.post("/", adminToken, async (req, res) => {
   const { name, email, password, number, role, designation } = req.body;
   const adminFields = {};
   try {
@@ -214,7 +229,7 @@ router.post("/", async (req, res) => {
 
 //@GET Route
 //@DESC Admin Route to get All the Users
-router.get("/users", async (req, res) => {
+router.get("/users", adminToken, async (req, res) => {
   try {
     const users = await User.find({ banAccount: false });
     if (users.length == 0) {
@@ -223,6 +238,23 @@ router.get("/users", async (req, res) => {
     res.json(users);
   } catch (error) {
     console.log(error.message);
+  }
+});
+
+//getting data of an admin through tokens which should not be possible at all
+// like this , instead a whole database should be maintained of user
+router.get("/getdata", adminToken, async (req, res) => {
+  var admin;
+  console.log(req.user);
+  try {
+    admin = await Admin.findById({ _id: req.user.id });
+    if (!admin) {
+      return res.status(404).json("error");
+    }
+    console.log(admin.email);
+    return res.status(200).json(admin);
+  } catch (error) {
+    return res.status(500).json(error);
   }
 });
 
@@ -235,10 +267,11 @@ router.post("/login", async (req, res) => {
     return res.json({ msg: "Admin Doesnt Exists!" });
   }
   const isMatch = await bcryptjs.compare(password, admin.password);
+
   if (!isMatch) {
     return res.json({ msg: "Invalid Credentials!" });
   }
-  const payload = {
+  /*const payload = {
     user: {
       id: admin.id,
     },
@@ -246,20 +279,45 @@ router.post("/login", async (req, res) => {
   const token = await jwt.sign(payload, config.get("jwtSecret"), {
     expiresIn: 36000000,
   });
-  res.json({ msg: "User Logged in Successfully", token: token });
+  res.json({ msg: "User Logged in Successfully", token: token });*/
+
+  try {
+    generateToken(req, res, admin._id, email, "admin", admin.role); // change this to email and agentid
+    // use the generateToken function to generate token
+    let token = res.token;
+    admin.password = null;
+    return res.status(200).json({ msg: "true", admin, token });
+  } catch (err) {
+    return res.status(500).json(err.toString());
+  }
+});
+
+//logging in user With refresh Token
+router.get("/token", verifyToken, (req, res) => {
+  try {
+    generateToken(res, req.user.id, req.user.email, "admin", req.user.role); // change this to email and agentid
+    // use the generateToken function to generate token
+    return res.status(200).json({ msg: "true" });
+  } catch (err) {
+    return res.status(500).json(err.toString());
+  }
 });
 
 //@PUT Route
 //@DESC Update Admin Details
-router.put("/update/:id", auth, async (req, res) => {
-  const { name, designation, email, oldPassword, newPassword } = req.body;
+router.patch("/update/:id", adminToken, async (req, res) => {
+  const { name, designation, email, number, oldPassword, newPassword } =
+    req.body;
+  console.log(req.body.name);
   const adminFields = {};
   try {
     if (name) adminFields.name = name;
     if (designation) adminFields.designation = designation;
     if (email) adminFields.email = email;
+    if (number) adminFields.number = number;
     if (newPassword) adminFields.password = newPassword;
     var admin = await Admin.findById(req.params.id);
+
     if (!admin) {
       return res.json({ msg: "No Admin Found" });
     }
@@ -271,8 +329,8 @@ router.put("/update/:id", auth, async (req, res) => {
       }
       const salt = await bcryptjs.genSalt(10);
       adminFields.password = await bcryptjs.hash(newPassword, salt);
-      admin = await Admin.findOneAndUpdate(
-        { id: req.params.id },
+      admin = await Admin.findByIdAndUpdate(
+        { _id: req.params.id },
         {
           $set: adminFields,
         },
@@ -280,7 +338,16 @@ router.put("/update/:id", auth, async (req, res) => {
           new: true,
         }
       );
-      return res.json({ msg: "User Updated", data: admin });
+      return res.json({ success: "Admin Updated", data: admin });
+    } else {
+      const doc = await Admin.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+      if (!doc) {
+        return res.json({ msg: "No found" });
+      }
+      return res.json({ success: "Admin Updated", data: admin });
     }
   } catch (error) {
     console.log(error.message);
@@ -292,7 +359,7 @@ router.put("/update/:id", auth, async (req, res) => {
 
 //@POST Route
 //@DESC Disapprove Jobs
-router.post("/decline/:id", async (req, res) => {
+router.post("/decline/:id", adminToken, async (req, res) => {
   const { email, reason } = req.body;
   try {
     const job = await Jobs.findById(req.params.id);
@@ -303,7 +370,7 @@ router.post("/decline/:id", async (req, res) => {
     await Jobs.findByIdAndDelete(req.params.id);
     const msg = {
       to: email + "",
-      from: "vedant.pruthi.io@gmail.com",
+      from: "jaskiratsingh772@gmail.com",
       subject: "Job not Approved!",
       text: "Sample Text",
       html:
@@ -322,8 +389,7 @@ router.post("/decline/:id", async (req, res) => {
         console.log(error.message);
       });
     res.json({
-      msg:
-        "Job Declined and Deleted. Message Sent to the Respective Job Holder!",
+      msg: "Job Declined and Deleted. Message Sent to the Respective Job Holder!",
     });
   } catch (error) {
     console.log(error.message);
@@ -338,7 +404,7 @@ router.post("/decline/:id", async (req, res) => {
 router.post("/sendEmail", async (req, res) => {
   var msg = {
     to: req.body.reciever + "",
-    from: "vedant.pruthi.io@gmail.com",
+    from: "jaskiratsingh772@gmail.com",
     subject: req.body.subject + "",
     text: "Sample Text",
     html: req.body.message + "",
@@ -360,7 +426,7 @@ router.post("/sendEmail", async (req, res) => {
 
 //@Ban Account
 //@GET ROUTE
-router.get("/banAccount/:id", async (req, res) => {
+router.get("/banAccount/:id", adminToken, async (req, res) => {
   try {
     var admin = await Admin.findById(req.params.id);
     if (!admin) {
@@ -382,7 +448,7 @@ router.get("/banAccount/:id", async (req, res) => {
 
 //@UnBan Account
 //@GET ROUTE
-router.get("/unBanAccount/:id", async (req, res) => {
+router.get("/unBanAccount/:id", adminToken, async (req, res) => {
   try {
     var admin = await Admin.findById(req.params.id);
     if (!admin) {
@@ -403,13 +469,13 @@ router.get("/unBanAccount/:id", async (req, res) => {
 });
 
 //@GET Ban Accounts
-router.get("/bannedAdmins", async (req, res) => {
+router.get("/bannedAdmins", adminToken, async (req, res) => {
   try {
     var admins = await Admin.find({ banAccount: true });
     if (admins.length == 0) {
       return res.json({ msg: "Admins Not Found!" });
     }
-    res.json(admins);
+    res.json({ admins });
   } catch (error) {
     console.log(error.message);
   }
