@@ -20,7 +20,7 @@ do
 		cd
 	elif [ $type == node ]
 	then
-		filename=`jq -r  .port_number  ${arr1[$i]}/deploy.json`
+		filename=`jq -r  .file_name  ${arr1[$i]}/deploy.json`
 		cd ${arr[$i]}
 		npm i
 		pm2 start $filename
